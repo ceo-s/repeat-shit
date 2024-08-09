@@ -7,7 +7,7 @@ import tkinter as tk
 class LanguagePicker(ttk.Frame):
   LANG_LIST = ["Russian", "English", "Italian", "French"]
 
-  def __init__(self, parent: ttk.Frame, button_image: tk.PhotoImage):
+  def __init__(self, parent: tk.Misc, button_image: tk.PhotoImage):
     super().__init__(parent, height=50, width=400, style='DarkStyle.TFrame')
     choose_lang_from = ttk.Combobox(self,
                                     values=self.LANG_LIST,
@@ -44,7 +44,7 @@ class LanguagePicker(ttk.Frame):
 
 class WordCountSlider(ttk.Frame):
 
-  def __init__(self, parent: ttk.Frame, word_count: int):
+  def __init__(self, parent: tk.Misc, word_count: int):
     super().__init__(parent, height=50, width=100, style='DarkStyle.TFrame')
     label_string = tk.StringVar(value=f"{1}/{word_count}")
     label = ttk.Label(self, textvariable=label_string)
