@@ -3,7 +3,7 @@ from collections import defaultdict
 from enum import Enum
 from dataclasses import dataclass, field
 
-__all__ = ["Language", "Translation", "Word"]
+__all__ = ["Language", "Translation", "Word", "Vocabulary"]
 
 
 class Language(Enum):

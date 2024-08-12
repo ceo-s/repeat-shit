@@ -1,0 +1,35 @@
+from src.db import *
+from src.vocabulary import *
+
+
+# t = Translation(Word("balls", Language.ENGLISH))
+# print("balls" == t)
+# print(t == "balls")
+# print(t == Word("balls", Language.ENGLISH))
+# print("cock" == t)
+# print(Language("ru"))
+# print(Language(Language("en")))
+
+# s = []
+# s.append(Word("balls", language=Language.ENGLISH))
+# print("balls" in s)
+# print(Word("balls", language=Language.ENGLISH) in s)
+# print(Word("balls", language=Language("en")) in s)
+# print(Word("balls", language=Language.ITALIAN) in s)
+db = Database("db")
+# db.vocabulary.add_word(Word("hi", Language.ENGLISH))
+# # v.add_word(Word("привет", Language.RUSSIAN))
+# # v.add_word(Word("здравствуйте", Language.RUSSIAN))
+# # v.add_word(Word("buenos dias", Language.ITALIAN))
+# hi = db.vocabulary.get_word(Word("hi", Language.ENGLISH))
+# hi1 = db.vocabulary.get_word(Word("привет", Language.RUSSIAN))
+# hi2 = db.vocabulary.get_word(Word("здравствуйте", Language.RUSSIAN))
+# hi3 = db.vocabulary.get_word(Word("buenos dias", Language.ITALIAN))
+# db.vocabulary.add_translation(hi, hi1)
+# db.vocabulary.add_translation(hi, hi1)
+# db.vocabulary.add_translation(hi, hi2)
+# db.vocabulary.add_translation(hi, hi3)
+# v.delete_word(hi)
+# v.print()
+db.vocabulary.print()
+db.save()

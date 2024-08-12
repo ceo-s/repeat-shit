@@ -2,7 +2,7 @@ from os import PathLike
 import os
 import pickle
 
-from src.vocabulary import *
+from src.vocabulary import Vocabulary
 
 __all__ = ["Database"]
 
