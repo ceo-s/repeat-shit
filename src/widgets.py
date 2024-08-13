@@ -391,20 +391,56 @@ class ImportFromFilePopUP(BasePopUp):
 
   def build(self):
     self.configure(fg_color=COLOR_YELLOW)
-    self.geometry("600x400")
-    label = ctk.CTkLabel(self, text="File should be filled with lines in specified format:")
-    l_container = ctk.CTkFrame(self)
-    label1 = ctk.CTkLabel(l_container, text="word", text_color=COLOR_GRAY)
-    label2 = ctk.CTkLabel(l_container, text=" | ", text_color="red")
-    label3 = ctk.CTkLabel(l_container, text="translation1, translation2, ...", text_color=COLOR_GRAY)
+    self.title("Import from file")
+    self.geometry("550x280")
+    self.resizable(False, False)
+    label = ctk.CTkLabel(self,
+                         text="Notice!\nFile must contain only lines of this format:",
+                         text_color=COLOR_GRAY,
+                         font=FONT(24, weight=FONT_WEIGHT_BOLD),
+                         )
+    l_container = tk.Frame(self, background=COLOR_YELLOW)
+    label1 = ctk.CTkLabel(l_container,
+                          text="word",
+                          text_color=COLOR_GRAY,
+                          font=FONT(18, weight=FONT_WEIGHT_REGULAR),
+                          )
+    label2 = ctk.CTkLabel(l_container,
+                          text=" | ",
+                          text_color="red",
+                          font=FONT(18, weight=FONT_WEIGHT_BOLD),
+                          )
+    label3 = ctk.CTkLabel(l_container,
+                          text="translation1, translation2, ...",
+                          text_color=COLOR_GRAY,
+                          font=FONT(18, weight=FONT_WEIGHT_REGULAR),
+                          )
+    label4 = ctk.CTkLabel(self,
+                          text="Line will be ignored otherwise!",
+                          text_color=COLOR_GRAY,
+                          font=FONT(24, weight=FONT_WEIGHT_BOLD),
+                          )
 
-    button = ctk.CTkButton(self, text="Choose file", command=self.__update_file_path)
-    label.pack(side=tk.TOP)
-    l_container.pack(side=tk.TOP)
+    # button = ctk.CTkButton(self, text="Choose file", command=self.__update_file_path)
+    button = ctk.CTkButton(self,
+                           height=40,
+                           width=240,
+                           text="Choose file",
+                           text_color=COLOR_WHITE,
+                           anchor="s",
+                           font=FONT(28, weight=FONT_WEIGHT_BOLD),
+                           corner_radius=4,
+                           bg_color=COLOR_YELLOW,
+                           fg_color=COLOR_BLUE,
+                           hover_color=COLOR_PINK1,
+                           command=self.__update_file_path)
+    label.pack(side=tk.TOP, pady=15)
+    l_container.pack(side=tk.TOP, pady=15)
     label1.pack(side=tk.LEFT)
     label2.pack(side=tk.LEFT)
     label3.pack(side=tk.LEFT)
-    button.pack(side=tk.TOP)
+    label4.pack(side=tk.TOP, pady=15)
+    button.pack(side=tk.TOP, pady=15)
 
     self.file_path: str | PathLike | None = None
 
@@ -417,6 +453,7 @@ class AddNewWordPopUp(BasePopUp):
 
   def build(self):
     self.configure(fg_color=COLOR_YELLOW)
+    self.title("Add new word")
     self.geometry("500x500")
     self.resizable(False, False)
     self.bind("<Button-1>", lambda event: event.widget.focus_set())
