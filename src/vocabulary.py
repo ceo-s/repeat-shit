@@ -1,16 +1,17 @@
 from typing import Self, NamedTuple, Union
 from collections import defaultdict
-from enum import Enum
 from dataclasses import dataclass, field
+
+from src.multienum import MultiEnum
 
 __all__ = ["Language", "Translation", "Word", "Vocabulary"]
 
 
-class Language(Enum):
-  RUSSIAN = "ru"
-  ENGLISH = "en"
-  ITALIAN = "it"
-  FRENCH = "fr"
+class Language(MultiEnum):
+  RUSSIAN = "russian", "ru"
+  ENGLISH = "english", "en"
+  ITALIAN = "italian", "it"
+  FRENCH = "french", "fr"
 
 
 @dataclass
@@ -62,9 +63,12 @@ class Vocabulary:
     lst = self.__data[word.language]
     if word not in lst:
       lst.append(word)
+      # return word
 
-  @staticmethod
-  def add_translation(word: "Word", translation: "Word"):
+  def add_translation(self, word: "Word", translation: "Word"):
+    word = self.get_word(word)
+    translation = self.get_word(translation)
+
     lst = word.translations[translation.language]
     lst2 = translation.translations[word.language]
 
@@ -94,6 +98,12 @@ class Vocabulary:
 
     del self
     lst.pop(w_i)
+
+  def get(self, language: Language) -> list[Word]:
+    return self.__data[language].copy()
+
+  def size(self, language: Language) -> int:
+    return len(self.__data[language])
 
   def print(self):
     print("Vocabulary:")

@@ -7,7 +7,7 @@ import customtkinter as ctk
 
 from src.colors import *
 from src.gallery import Gallery
-from src.db import VocabularyRow
+from src.vocabulary import Vocabulary, Word, Translation, Language
 from src.scrollable_dropdown import CTkScrollableDropdown
 
 
@@ -116,8 +116,8 @@ class LanguagePicker(BaseWidget):
     self.__val_from = self.__choose_lang_from.get()
     self.__val_to = self.__choose_lang_to.get()
 
-  def get_lang_pair(self) -> tuple[str, str]:
-    return self.__choose_lang_from.get(), self.__choose_lang_to.get()
+  def get_lang_pair(self) -> tuple[Language, Language]:
+    return Language(self.__choose_lang_from.get().lower().strip()), Language(self.__choose_lang_to.get().lower().strip())
 
   def __on_lang_change(self, val: str):
     for callback in self.__callbacks:
@@ -202,7 +202,7 @@ class VocabularyTable(BaseWidget):
     self.body.bind("<MouseWheel>", self.__on_mouse_scroll)
     self.body.bind("<Button-4>", self.__on_mouse_scroll)
     self.body.bind("<Button-5>", self.__on_mouse_scroll)
-    self.content: list[VocabularyRow] = []
+    self.content: list[Word] = []
 
   def build(self):
     self.__del_rows()
@@ -247,7 +247,7 @@ class VocabularyTable(BaseWidget):
 
     self.__add_rows()
 
-  def update_content(self, new_content: list[VocabularyRow]):
+  def update_content(self, new_content: list[Word]):
     self.content.clear()
     self.content.extend(new_content)
 
@@ -263,9 +263,9 @@ class VocabularyTable(BaseWidget):
     for i, row in enumerate(self.content, start=1):
       self.body.create_text(35, 30 * i, anchor="w", text=row.word,
                             fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
-      self.body.create_text(355, 30 * i, anchor="w", text=row.translation,
+      self.body.create_text(355, 30 * i, anchor="w", text=row.word,
                             fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
-      self.body.create_text(803, 30 * i, anchor="w", text=f"{row.accuracy}%",
+      self.body.create_text(803, 30 * i, anchor="w", text=f"{row.language.value}%",
                             fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
 
     self.body.configure(scrollregion=self.body.bbox("all"))
@@ -340,8 +340,9 @@ class ExerciseWidget(BaseWidget):
   def is_initialized(self):
     return self.__initialized
 
-  def initialize_exercise(self, words: list[VocabularyRow]):
+  def initialize_exercise(self, words: list[Word], language_to: Language):
     self.__words = words
+    self.__language_to = language_to
     self.__n_words = len(words)
     self.__results = []
     self.__i_word = 0
@@ -357,7 +358,7 @@ class ExerciseWidget(BaseWidget):
     self.__render_next_word()
 
   def __check_translation(self, translation: str):
-    self.__results.append(translation == self.__words[self.__i_word].translation)
+    self.__results.append(translation == self.__words[self.__i_word].word)
 
   def __render_next_word(self):
 

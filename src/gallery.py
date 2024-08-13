@@ -5,10 +5,18 @@ import os
 
 
 class Gallery:
-  def __init__(self, path: str | PathLike) -> None:
+  __instances = {}
+
+  def __new__(cls, path: str | PathLike):
+    if path not in cls.__instances:
+      cls.__instances[path] = super().__new__(cls)
+      cls.__instances[path].__init(path)
+    return cls.__instances[path]
+
+  def __init(self, path: str | PathLike) -> None:
     self.data = {}
     if not os.path.exists(path):
-      print(f"Gallery.__init__ : path \"{path}\" does not exist")
+      print(f"Gallery.__init : path \"{path}\" does not exist")
       return
 
     for image_path in os.listdir(path):

@@ -6,7 +6,7 @@ from tkinter import ttk
 
 
 from src.colors import *
-from src.db import Database, Vocabulary, VocabularyRow
+from src.db import Database
 from src.endpoints import init_endpoints, build_main_endpoint
 
 

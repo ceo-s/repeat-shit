@@ -9,7 +9,8 @@ import customtkinter as ctk
 
 from src.widgets import LanguagePicker, VocabularyTable, WordCountSlider, ExerciseWidget
 from src.gallery import Gallery
-from src.db import Database, VocabularyRow, Vocabulary
+from src.db import Database
+from src.vocabulary import Vocabulary, Word, Translation, Language
 
 
 def init_endpoints(root: tk.Tk):
@@ -223,21 +224,22 @@ class EndpointConfigurateExercise(BaseEndpoint):
 
   @classmethod
   def start_exercise(cls):
-    print("Starting!")
+    print("Starting exercise!")
     cls.leave()
     lang_from, lang_to = cls.lang_picker.get_lang_pair()
-    print(lang_from, lang_to)
-    print(Database().vocabulary.get_langpair_hash(lang_from, lang_to))
-    print(getattr(Database().vocabulary, "_Vocabulary__data"))
     word_count = cls.word_count_slider.get()
     new_words = bool(cls.add_new_word_variable.get())
 
-    EndpointSolve.initialize_exercise(Database().vocabulary.get_random(lang_from, lang_to, word_count))
+    EndpointSolve.initialize_exercise(Database().vocabulary.get(Language(lang_from)), Language(lang_to))
     EndpointSolve.enter()
 
   @classmethod
   def __set_word_count_at_lang_change(cls, _: str):
-    cls.word_count_slider.set_max(Database().vocabulary.lang_specific_size(*cls.lang_picker.get_lang_pair()))
+    lang_from, lang_to = cls.lang_picker.get_lang_pair()
+    count = 0
+    for word in Database().vocabulary.get(lang_from):
+      count += len(word.translations[lang_to])
+    cls.word_count_slider.set_max(count)
 
 
 class EndpointSolve(BaseEndpoint):
@@ -293,8 +295,8 @@ class EndpointSolve(BaseEndpoint):
     cls.exercise_widget.build()
 
   @classmethod
-  def initialize_exercise(cls, words: list[VocabularyRow]):
-    cls.exercise_widget.initialize_exercise(words)
+  def initialize_exercise(cls, words: list[Word], lang_to: Language):
+    cls.exercise_widget.initialize_exercise(words, lang_to)
 
 
 class EndpointVocabulary(BaseEndpoint):
