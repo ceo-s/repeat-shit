@@ -1,6 +1,6 @@
 from src.colors import *
 from src.gallery import Gallery
-from tkinter import Canvas, Button, Entry
+from tkinter import ttk, Canvas, Button, Entry
 from typing import Any, Type
 from abc import ABC, abstractmethod
 
@@ -24,7 +24,7 @@ def init_endpoints(root: tk.Tk):
 
 def build_main_endpoint():
   # EndpointMainMenu.enter()
-  EndpointConfigurateExercise.enter()
+  EndpointVocabulary.enter()
 
 
 class BaseEndpoint(ABC):
@@ -194,7 +194,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
 
     cls.lang_picker.place(anchor="center", relx=.5, rely=.33)
-    cls.lang_picker.add_callback(cls.__set_word_count_at_lang_change)
+    cls.lang_picker.add_callback("<<LangChange>>", cls.__set_word_count_at_lang_change)
     cls.lang_picker.build()
     cls.word_count_slider.place(anchor="center", relx=.5, rely=.58)
     cls.__set_word_count_at_lang_change("")
@@ -230,7 +230,13 @@ class EndpointConfigurateExercise(BaseEndpoint):
     word_count = cls.word_count_slider.get()
     new_words = bool(cls.add_new_word_variable.get())
 
-    EndpointSolve.initialize_exercise(Database().vocabulary.get(Language(lang_from)), Language(lang_to))
+    EndpointSolve.initialize_exercise(
+      Database().vocabulary.get_words_to_repeat(
+          word_count,
+          lang_from,
+          lang_to),
+        Language(lang_to))
+
     EndpointSolve.enter()
 
   @classmethod
@@ -238,7 +244,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     lang_from, lang_to = cls.lang_picker.get_lang_pair()
     count = 0
     for word in Database().vocabulary.get(lang_from):
-      count += len(word.translations[lang_to])
+      count += bool(len(word.translations[lang_to]))
     cls.word_count_slider.set_max(count)
 
 
@@ -298,6 +304,11 @@ class EndpointSolve(BaseEndpoint):
   def initialize_exercise(cls, words: list[Word], lang_to: Language):
     cls.exercise_widget.initialize_exercise(words, lang_to)
 
+  @classmethod
+  def leave(cls):
+    cls.exercise_widget.delete("all")
+    super().leave()
+
 
 class EndpointVocabulary(BaseEndpoint):
   @classmethod
@@ -305,7 +316,7 @@ class EndpointVocabulary(BaseEndpoint):
     cls.GALLERY = Gallery("assets/vocabulary")
     cls.canvas = Canvas(
         cls.PARENT,
-        bg="#F0DBAF",
+        bg=COLOR_YELLOW,
         height=800,
         width=1000,
         bd=0,
@@ -339,14 +350,27 @@ class EndpointVocabulary(BaseEndpoint):
         command=lambda: cls.leave() or EndpointMainMenu.enter(),
         relief="flat"
     )
-    # cls.language_picker = LanguagePicker(cls.canvas)
-    cls.vocabulary_widget = VocabularyTable(cls.canvas)
+
+    cls.lang_picker = LanguagePicker(cls.canvas)
+    cls.lang_picker.add_callback("<<LangChange>>", cls.__update_table)
+    cls.lang_picker.add_callback("<<LangSwap>>", cls.__update_table)
+    cls.table_container = tk.Frame(cls.canvas, height=460, width=900, background=COLOR_BLUE)
+    cls.table_container.pack_propagate(False)
+    cls.table = ttk.Treeview(cls.table_container,
+                             columns=("word", "translation", "accuracy"),
+                             show="headings")
+    cls.table.heading("word", text="Word")
+    cls.table.heading("translation", text="Translation")
+    cls.table.heading("accuracy", text="%")
+    cls.table.column(0, anchor="w", width=400)
+    cls.table.column(1, anchor="w", width=400)
+    cls.table.column(2, anchor="center", width=100)
 
   @classmethod
   def enter(cls):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
 
-    cls.vocabulary_widget.build()
+    cls.lang_picker.build()
 
     image_1 = cls.canvas.create_image(
         500.0,
@@ -368,14 +392,6 @@ class EndpointVocabulary(BaseEndpoint):
         height=64.0
     )
 
-    cls.canvas.create_rectangle(
-        257.0,
-        140.0,
-        743.0,
-        180.0,
-        fill="#000000",
-        outline="")
-
     cls.button_back.place(
         x=20.0,
         y=60.0,
@@ -383,4 +399,23 @@ class EndpointVocabulary(BaseEndpoint):
         height=44.0
     )
 
-    cls.vocabulary_widget.place(x=50, y=224, anchor='nw')
+    cls.table_container.place(x=50, y=224, anchor='nw')
+    cls.table.pack(fill="both", expand=True)
+
+    cls.lang_picker.place(anchor="center", relx=.5, rely=.2)
+
+  @classmethod
+  def __update_table(cls, _: str):
+    cls.table.delete(*cls.table.get_children())
+    lang_from, lang_to = cls.lang_picker.get_lang_pair()
+
+    for word in Database().vocabulary.get(lang_from):
+      if len(word.translations[lang_to]) > 0:
+        cls.table.insert('',
+                         tk.END,
+                         values=(
+                             word.word,
+                             word.get_translations_string(lang_to),
+                             f"{max([t.accuracy for t in word.translations[lang_to]])}"
+                         )
+                         )

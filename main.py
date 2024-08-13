@@ -33,8 +33,29 @@ def init_styles(root: Tk):
   root.option_add('*TCombobox*Listbox.selectBackground', COLOR_BROWN)
   root.option_add('*TCombobox*Listbox.font', ("JetBrainsMonoRoman Regular", 24 * -1))
 
-  ttk.Style(root).configure("LangPicker.TCombobox", font=(
-    "JetBrainsMonoRoman Regular", 24 * -1), background='green', foreground='white')
+  style = ttk.Style(root)
+  style.configure("LangPicker.TCombobox",
+                  font=("JetBrainsMonoRoman Regular", 24 * -1),
+                  background='green',
+                  foreground='white')
+
+  style.configure("Treeview.Heading",
+                  font=('JetBrainsMonoRoman ', 28, 'bold'),
+                  padding=(10, 10),
+                  background=COLOR_YELLOW)
+
+  style.configure("Treeview",
+                  highlightthickness=0,
+                  bd=0,
+                  rowheight=34,
+                  font=('JetBrainsMonoRoman Regular', 15),
+                  background=COLOR_BROWN,
+                  foreground=COLOR_GRAY)
+  style.map("Treeview",
+            background=[("selected", COLOR_YELLOW)],
+            foreground=[("selected", COLOR_BLACK)],
+            )
+  style.layout("Treeview", [('Treeview.treearea', {'sticky': 'nswe'})])
 
 
 if __name__ == "__main__":

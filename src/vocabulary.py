@@ -1,6 +1,7 @@
-from typing import Self, NamedTuple, Union
+from typing import Union
 from collections import defaultdict
 from dataclasses import dataclass, field
+import random
 
 from src.multienum import MultiEnum
 
@@ -22,7 +23,7 @@ class Translation:
 
   @property
   def accuracy(self) -> float:
-    return self._n_repeat / self._n_repeat
+    return self._n_repeat / (self._n_repeat + 0.0001)
 
   def repeat(self, sucess: bool):
     self._n_repeat += 1
@@ -43,8 +44,8 @@ class Word:
   language: Language
   translations: dict[Language, list[Translation]] = field(default_factory=lambda: defaultdict(list), init=False)
 
-  def get_translations(self, language: Language):
-    return self.translations[language]
+  def get_translations_string(self, language: Language):
+    return ", ".join([translation.translation.word for translation in self.translations[language]])
 
   def __str__(self):
     return f"Word<{self.word}>"
@@ -53,6 +54,16 @@ class Word:
     if isinstance(other, str):
       return self.word == other
     return self.word == other.word and self.language == other.language
+
+  def __lt__(self, other: Union[str, "Word"]):
+    if isinstance(other, str):
+      return self.word < other
+    return self.word < other.word
+
+  def __le__(self, other: Union[str, "Word"]):
+    if isinstance(other, str):
+      return self.word <= other
+    return self.word <= other.word
 
 
 class Vocabulary:
@@ -104,6 +115,22 @@ class Vocabulary:
 
   def size(self, language: Language) -> int:
     return len(self.__data[language])
+
+  def get_words_to_repeat(self, n: int, lang_from: Language, lang_to: Language) -> list[Word]:
+    if n == len(self.get(lang_from)):
+      words = self.get(lang_from).copy()
+      random.shuffle(words)
+      return words
+
+    stats = []
+    for word in self.get(lang_from):
+      max_accuracy = max([t.accuracy for t in word.translations[lang_to]])
+      repeat_count = sum([t._n_repeat for t in word.translations[lang_to]])
+      stats.append((max_accuracy, repeat_count, word))
+
+    stats.sort()
+
+    return [stat[2] for stat in stats[:n]]
 
   def print(self):
     print("Vocabulary:")

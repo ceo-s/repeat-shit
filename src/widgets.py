@@ -1,5 +1,5 @@
 from tkinter import ttk
-from typing import Callable
+from typing import Callable, Literal
 from abc import abstractmethod, ABC
 
 import tkinter as tk
@@ -99,8 +99,8 @@ class LanguagePicker(BaseWidget):
                                        command=self.__swap_picker_values,
                                        relief="flat")
 
-    self.__callbacks: list[Callable[[str], None]] = []
-    self.add_callback(self.__swap_if_both_same)
+    self.__callbacks: dict[str, list[Callable[[str], None]]] = {"<<LangSwap>>": [], "<<LangChange>>": []}
+    self.add_callback("<<LangChange>>", self.__swap_if_both_same)
     self.__val_from = self.__choose_lang_from.get()
     self.__val_to = self.__choose_lang_to.get()
 
@@ -115,16 +115,21 @@ class LanguagePicker(BaseWidget):
     self.__choose_lang_to.set(from_val)
     self.__val_from = self.__choose_lang_from.get()
     self.__val_to = self.__choose_lang_to.get()
+    self.__on_lang_swap()
 
   def get_lang_pair(self) -> tuple[Language, Language]:
     return Language(self.__choose_lang_from.get().lower().strip()), Language(self.__choose_lang_to.get().lower().strip())
 
   def __on_lang_change(self, val: str):
-    for callback in self.__callbacks:
+    for callback in self.__callbacks["<<LangChange>>"]:
       callback(val)
 
-  def add_callback(self, callback: Callable[[str], None]):
-    self.__callbacks.append(callback)
+  def __on_lang_swap(self):
+    for callback in self.__callbacks["<<LangSwap>>"]:
+      callback("")
+
+  def add_callback(self, event: Literal["<<LangSwap>>", "<<LangChange>>"], callback: Callable[[str], None]):
+    self.__callbacks[event].append(callback)
 
   def __swap_if_both_same(self, val: str):
     id_, val = val.split(":")
