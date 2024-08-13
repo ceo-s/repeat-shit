@@ -7,3 +7,11 @@ COLOR_GRAY = "#464646"
 COLOR_PINK1 = "#DC8686"
 COLOR_PINK2 = "#B06161"
 COLOR_PINK3 = "#E3A8A8"
+
+FONT_MAIN = "JetBrainsMonoRoman"
+FONT_WEIGHT_REGULAR = "normal"
+FONT_WEIGHT_BOLD = "bold"
+
+
+def FONT(font_size: int, name=FONT_MAIN, weight=FONT_WEIGHT_REGULAR):
+  return (f"{name}", font_size, weight)

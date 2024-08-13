@@ -6,7 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 
 
-from src.colors import *
+from src.consts import *
 from src.db import Database
 from src.endpoints import init_endpoints, build_main_endpoint
 
@@ -32,17 +32,17 @@ def init_styles(root: CTk):
   root.title("RepeatShit.IO")
   root.option_add('*TCombobox*Listbox.background', COLOR_YELLOW)
   root.option_add('*TCombobox*Listbox.selectBackground', COLOR_BROWN)
-  root.option_add('*TCombobox*Listbox.font', ("JetBrainsMonoRoman Regular", 24 * -1))
+  root.option_add('*TCombobox*Listbox.font', FONT(24))
 
   style = ttk.Style(root)
   style.configure("LangPicker.TCombobox",
-                  font=("JetBrainsMonoRoman Regular", 24 * -1),
+                  font=FONT(24),
                   background='green',
                   foreground='white',
                   )
 
   style.configure("Treeview.Heading",
-                  font=('JetBrainsMonoRoman ', 28, 'bold'),
+                  font=FONT(28, weight=FONT_WEIGHT_BOLD),
                   padding=(10, 10),
                   background=COLOR_BROWN,
                   relief="flat",
@@ -52,7 +52,7 @@ def init_styles(root: CTk):
                   highlightthickness=0,
                   bd=0,
                   rowheight=34,
-                  font=('JetBrainsMonoRoman Regular', 15),
+                  font=FONT(15),
                   background=COLOR_BROWN,
                   foreground=COLOR_GRAY,
                   )

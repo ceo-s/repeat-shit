@@ -1,4 +1,4 @@
-from src.colors import *
+from src.consts import *
 from src.gallery import Gallery
 from tkinter import ttk, Canvas, Button, Entry
 from typing import Any, Type
@@ -170,7 +170,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.add_new_word_checkbox = ctk.CTkCheckBox(cls.canvas, 200, 60,
                                                 text="Add new random words",
                                                 text_color=COLOR_PINK1,
-                                                font=("JetBrainsMonoRoman ExtraBold", 22 * -1),
+                                                font=FONT(22, weight=FONT_WEIGHT_BOLD),
                                                 variable=cls.add_new_word_variable,
                                                 onvalue=1,
                                                 offvalue=0,
@@ -393,7 +393,6 @@ class EndpointVocabulary(BaseEndpoint):
     cls.table.column(0, anchor="w", width=300, minwidth=300, stretch=False)
     cls.table.column(1, anchor="w", width=500, minwidth=500, stretch=False)
     cls.table.column(2, anchor="center", width=100, minwidth=400, stretch=False)
-    print(cls.table["columns"])
 
     cls.lang_picker.build()
 
@@ -499,7 +498,6 @@ class EndpointVocabulary(BaseEndpoint):
 
       db = Database()
       for line in file:
-        print("line", line)
         word, translations = line.split("|")
         word = Word(word.strip().lower(), lang_from)
         db.vocabulary.add_word(word)
@@ -530,4 +528,3 @@ class EndpointVocabulary(BaseEndpoint):
       Database().vocabulary.delete_word(word)
 
     cls.table.delete(*item_ids)
-    print("button del clicked")

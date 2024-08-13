@@ -7,7 +7,7 @@ from os import PathLike
 import tkinter as tk
 import customtkinter as ctk
 
-from src.colors import *
+from src.consts import *
 from src.gallery import Gallery
 from src.vocabulary import Vocabulary, Word, Translation, Language
 from src.scrollable_dropdown import CTkScrollableDropdown
@@ -49,8 +49,8 @@ class LanguagePicker(BaseWidget):
     self.pack_propagate(True)
     self.configure(height=50, width=400, background=COLOR_YELLOW, highlightthickness=0, relief='ridge')
     self.__choose_lang_from = ctk.CTkOptionMenu(self, 180, 50, 6,
-                                                font=("JetBrainsMono Bold", 20),
-                                                dropdown_font=("JetBrainsMonoRoman Regular", 20),
+                                                font=FONT(20, weight=FONT_WEIGHT_BOLD),
+                                                dropdown_font=FONT(20),
                                                 values=self.LANG_LIST,
                                                 fg_color=COLOR_PINK1,
                                                 text_color=COLOR_YELLOW,
@@ -75,8 +75,8 @@ class LanguagePicker(BaseWidget):
                           )
 
     self.__choose_lang_to = ctk.CTkOptionMenu(self, 180, 50, 6,
-                                              font=("JetBrainsMono Bold", 20),
-                                              dropdown_font=("JetBrainsMonoRoman Regular", 20),
+                                              font=FONT(20, FONT_WEIGHT_REGULAR),
+                                              dropdown_font=FONT(20, FONT_WEIGHT_REGULAR),
                                               values=self.LANG_LIST,
                                               fg_color=COLOR_PINK1,
                                               text_color=COLOR_YELLOW,
@@ -183,7 +183,7 @@ class WordCountSlider(BaseWidget):
 
   def build(self):
     self.__text_id = self.create_text(250.0, 35.0, fill=COLOR_GRAY, anchor="center", text=f"{int(self.get())}/{self.__max_value}",
-                                      font=("JetBrainsMonoRoman Bold", 40 * -1))
+                                      font=FONT(40, weight=FONT_WEIGHT_BOLD))
     self.__slider.place(anchor="center", relx=.5, rely=.7)
 
   def set(self, value: int | float):
@@ -236,7 +236,7 @@ class VocabularyTable(BaseWidget):
         anchor="nw",
         text="Word:",
         fill="#000000",
-        font=("JetBrainsMonoRoman Regular", 24 * -1)
+        font=FONT(24)
     )
 
     self.head.create_text(
@@ -245,7 +245,7 @@ class VocabularyTable(BaseWidget):
         anchor="nw",
         text="Translation:",
         fill="#000000",
-        font=("JetBrainsMonoRoman Regular", 24 * -1)
+        font=FONT(24)
     )
 
     self.head.create_text(
@@ -254,7 +254,7 @@ class VocabularyTable(BaseWidget):
         anchor="nw",
         text="Accuracy:",
         fill="#000000",
-        font=("JetBrainsMonoRoman Regular", 24 * -1)
+        font=FONT(24)
     )
 
     self.head.create_rectangle(
@@ -282,11 +282,11 @@ class VocabularyTable(BaseWidget):
 
     for i, row in enumerate(self.content, start=1):
       self.body.create_text(35, 30 * i, anchor="w", text=row.word,
-                            fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
+                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
       self.body.create_text(355, 30 * i, anchor="w", text=row.word,
-                            fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
+                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
       self.body.create_text(803, 30 * i, anchor="w", text=f"{row.language.value}%",
-                            fill=COLOR_BLACK, font=("JetBrainsMonoRoman Regular", 20 * -1))
+                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
 
     self.body.configure(scrollregion=self.body.bbox("all"))
 
@@ -313,7 +313,7 @@ class ExerciseWidget(BaseWidget):
         placeholder_text="Enter translation here:",
         placeholder_text_color=COLOR_GRAY,
         text_color=COLOR_GRAY,
-        font=("JetBrainsMonoRoman Medium", 24 * -1),
+        font=FONT(24, weight=FONT_WEIGHT_REGULAR),
         height=60,
         width=480,
         corner_radius=6,
@@ -342,7 +342,7 @@ class ExerciseWidget(BaseWidget):
         anchor="center",
         text=self.__words[0].word,
         fill=COLOR_BLACK,
-        font=("JetBrainsMonoRoman ExtraBold", 44 * -1)
+        font=FONT(44, weight=FONT_WEIGHT_BOLD)
     )
 
     self.__counter_string_id = self.create_text(
@@ -351,7 +351,7 @@ class ExerciseWidget(BaseWidget):
         anchor="center",
         text=f"{self.__i_word + 1}/{self.__n_words}",
         fill=COLOR_GRAY,
-        font=("JetBrainsMonoRoman Regular", 38 * -1)
+        font=FONT(38)
     )
 
     self.__entry.place(anchor="center", relx=.5, rely=.65)
@@ -417,22 +417,54 @@ class AddNewWordPopUp(BasePopUp):
 
   def build(self):
     self.configure(fg_color=COLOR_YELLOW)
-    self.geometry("600x400")
+    self.geometry("500x500")
+    self.resizable(False, False)
     self.bind("<Button-1>", lambda event: event.widget.focus_set())
-    label1 = ctk.CTkLabel(self, text="Enter word:")
-    label2 = ctk.CTkLabel(self, text="Enter translations:")
-    confirm_button = ctk.CTkButton(self, text="Confirm", command=self.__update_data)
+    label1 = ctk.CTkLabel(self,
+                          text="Enter word:",
+                          text_color=COLOR_GRAY,
+                          font=FONT(24, weight=FONT_WEIGHT_BOLD),
+                          )
+    label2 = ctk.CTkLabel(self,
+                          text="Enter translations:",
+                          text_color=COLOR_GRAY,
+                          font=FONT(24, weight=FONT_WEIGHT_BOLD),
+                          )
+    confirm_button = ctk.CTkButton(self,
+                                   height=40,
+                                   width=200,
+                                   text="Confirm",
+                                   text_color=COLOR_WHITE,
+                                   anchor="s",
+                                   font=FONT(28, weight=FONT_WEIGHT_BOLD),
+                                   corner_radius=4,
+                                   bg_color=COLOR_YELLOW,
+                                   fg_color=COLOR_BLUE,
+                                   hover_color=COLOR_PINK1,
+                                   command=self.__update_data)
 
-    self.word_entry = ctk.CTkEntry(self, placeholder_text="word")
+    self.word_entry = ctk.CTkEntry(self,
+                                   placeholder_text="word",
+                                   placeholder_text_color=COLOR_PINK3,
+                                   text_color=COLOR_GRAY,
+                                   font=FONT(24, weight=FONT_WEIGHT_REGULAR),
+                                   height=30,
+                                   width=300,
+                                   corner_radius=6,
+                                   border_width=0,
+                                   bg_color=COLOR_BROWN,
+                                   fg_color=COLOR_BROWN,
+                                   )
+
     self.translation_entries: list[ctk.CTkEntry] = []
-    self.translation_entries_container = tk.Frame(self)
+    self.translation_entries_container = tk.Frame(self, background=COLOR_YELLOW)
 
-    label1.pack()
-    self.word_entry.pack()
-    label2.pack()
+    label1.pack(side=tk.TOP, pady=15)
+    self.word_entry.pack(side=tk.TOP, pady=15)
+    label2.pack(side=tk.TOP, pady=15)
     self.translation_entries_container.pack()
     self.__add_translation_entry()
-    confirm_button.pack()
+    confirm_button.pack(side=tk.BOTTOM, pady=20)
 
     self.word: str | None = None
     self.translations: list[str] | None
@@ -456,12 +488,23 @@ class AddNewWordPopUp(BasePopUp):
     for entry in self.translation_entries:
       if not entry.get():
         return
-
-    self.__add_translation_entry()
+    if len(self.translation_entries) < 6:
+      self.__add_translation_entry()
 
   def __add_translation_entry(self):
-    new_entry = ctk.CTkEntry(self.translation_entries_container, placeholder_text=f"one of the translations")
-    new_entry.pack()
+    new_entry = ctk.CTkEntry(self.translation_entries_container,
+                             placeholder_text=f"one of the translations",
+                             placeholder_text_color=COLOR_PINK3,
+                             text_color=COLOR_GRAY,
+                             font=FONT(24, weight=FONT_WEIGHT_REGULAR),
+                             height=30,
+                             width=300,
+                             corner_radius=6,
+                             border_width=0,
+                             bg_color=COLOR_BROWN,
+                             fg_color=COLOR_BROWN,
+                             )
+    new_entry.pack(side=tk.TOP, pady=5)
     new_entry.bind("<FocusOut>", self.__modify_translation_entries)
     self.translation_entries.append(new_entry)
 
