@@ -1,6 +1,8 @@
 from tkinter import ttk
-from typing import Callable, Literal
+from tkinter.filedialog import askopenfilename
+from typing import Callable, ParamSpec, Literal, Any
 from abc import abstractmethod, ABC
+from os import PathLike
 
 import tkinter as tk
 import customtkinter as ctk
@@ -25,6 +27,19 @@ class BaseWidget(tk.Canvas, ABC):
   @abstractmethod
   def build(self):
     ...
+
+
+class BasePopUp(ctk.CTkToplevel, ABC):
+  def __init__[**P](self):
+    super().__init__(fg_color=COLOR_YELLOW)
+    self.build()
+
+  @abstractmethod
+  def build(self):
+    ...
+
+  def destroy(self):
+    super().destroy()
 
 
 class LanguagePicker(BaseWidget):
@@ -370,3 +385,86 @@ class ExerciseWidget(BaseWidget):
     self.itemconfig(self.__word_id, text=self.__words[self.__i_word].word)
     self.itemconfig(self.__counter_string_id, text=f"{self.__i_word + 1}/{self.__n_words}")
     self.__entry.delete(0, ctk.END)
+
+
+class ImportFromFilePopUP(BasePopUp):
+
+  def build(self):
+    self.configure(fg_color=COLOR_YELLOW)
+    self.geometry("600x400")
+    label = ctk.CTkLabel(self, text="File should be filled with lines in specified format:")
+    l_container = ctk.CTkFrame(self)
+    label1 = ctk.CTkLabel(l_container, text="word", text_color=COLOR_GRAY)
+    label2 = ctk.CTkLabel(l_container, text=" | ", text_color="red")
+    label3 = ctk.CTkLabel(l_container, text="translation1, translation2, ...", text_color=COLOR_GRAY)
+
+    button = ctk.CTkButton(self, text="Choose file", command=self.__update_file_path)
+    label.pack(side=tk.TOP)
+    l_container.pack(side=tk.TOP)
+    label1.pack(side=tk.LEFT)
+    label2.pack(side=tk.LEFT)
+    label3.pack(side=tk.LEFT)
+    button.pack(side=tk.TOP)
+
+    self.file_path: str | PathLike | None = None
+
+  def __update_file_path(self):
+    self.file_path = askopenfilename()
+    self.destroy()
+
+
+class AddNewWordPopUp(BasePopUp):
+
+  def build(self):
+    self.configure(fg_color=COLOR_YELLOW)
+    self.geometry("600x400")
+    self.bind("<Button-1>", lambda event: event.widget.focus_set())
+    label1 = ctk.CTkLabel(self, text="Enter word:")
+    label2 = ctk.CTkLabel(self, text="Enter translations:")
+    confirm_button = ctk.CTkButton(self, text="Confirm", command=self.__update_data)
+
+    self.word_entry = ctk.CTkEntry(self, placeholder_text="word")
+    self.translation_entries: list[ctk.CTkEntry] = []
+    self.translation_entries_container = tk.Frame(self)
+
+    label1.pack()
+    self.word_entry.pack()
+    label2.pack()
+    self.translation_entries_container.pack()
+    self.__add_translation_entry()
+    confirm_button.pack()
+
+    self.word: str | None = None
+    self.translations: list[str] | None
+
+  def __update_data(self):
+    if self.word_entry.get():
+      self.word = self.word_entry.get().strip().lower()
+
+    translations = list(filter(bool, [t_e.get().strip().lower() for t_e in self.translation_entries]))
+    if len(translations):
+      self.translations = translations
+
+    self.destroy()
+
+  def __modify_translation_entries(self, e: tk.Event):
+    empty_entries = list(filter(lambda x: not bool(x.get()), self.translation_entries))
+
+    if len(empty_entries) > 1:
+      self.__del_translation_entry(self.translation_entries.index(empty_entries[-1]))
+
+    for entry in self.translation_entries:
+      if not entry.get():
+        return
+
+    self.__add_translation_entry()
+
+  def __add_translation_entry(self):
+    new_entry = ctk.CTkEntry(self.translation_entries_container, placeholder_text=f"one of the translations")
+    new_entry.pack()
+    new_entry.bind("<FocusOut>", self.__modify_translation_entries)
+    self.translation_entries.append(new_entry)
+
+  def __del_translation_entry(self, i: int):
+    entry = self.translation_entries.pop(i)
+    entry.pack_forget()

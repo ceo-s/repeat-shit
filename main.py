@@ -1,5 +1,6 @@
 
-from tkinter import Tk
+# from tkinter import CTk
+from customtkinter import CTk
 
 import tkinter as tk
 from tkinter import ttk
@@ -12,7 +13,7 @@ from src.endpoints import init_endpoints, build_main_endpoint
 
 def main() -> None:
   db = Database("db")
-  root = Tk()
+  root = CTk(fg_color=COLOR_YELLOW)
   root.geometry("{x}x{y}".format(
     x=root.winfo_screenwidth(),
     y=root.winfo_screenheight()
@@ -26,7 +27,7 @@ def main() -> None:
   db.save()
 
 
-def init_styles(root: Tk):
+def init_styles(root: CTk):
   root.configure(background=COLOR_YELLOW)
   root.title("RepeatShit.IO")
   root.option_add('*TCombobox*Listbox.background', COLOR_YELLOW)

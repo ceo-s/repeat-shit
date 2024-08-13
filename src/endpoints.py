@@ -1,20 +1,19 @@
 from src.colors import *
 from src.gallery import Gallery
 from tkinter import ttk, Canvas, Button, Entry
-from tkinter.filedialog import askopenfilename
 from typing import Any, Type
 from abc import ABC, abstractmethod
 
 import tkinter as tk
 import customtkinter as ctk
 
-from src.widgets import LanguagePicker, VocabularyTable, WordCountSlider, ExerciseWidget
+from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget, ImportFromFilePopUP, AddNewWordPopUp
 from src.gallery import Gallery
 from src.db import Database
 from src.vocabulary import Vocabulary, Word, Translation, Language
 
 
-def init_endpoints(root: tk.Tk):
+def init_endpoints(root: ctk.CTk):
   BaseEndpoint.PARENT = root
   BaseEndpoint.SHARED_GALLERY = Gallery("assets/shared")
   EndpointMainMenu.init()
@@ -29,7 +28,7 @@ def build_main_endpoint():
 
 
 class BaseEndpoint(ABC):
-  PARENT: tk.Tk
+  PARENT: ctk.CTk
   SHARED_GALLERY: Gallery
   GALLERY: Gallery
   canvas: Canvas
@@ -331,7 +330,7 @@ class EndpointVocabulary(BaseEndpoint):
         image=cls.GALLERY["button_1.png"],
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_add_word clicked"),
+        command=cls.__open_add_word_pop_up,
         relief="flat"
     )
 
@@ -340,7 +339,7 @@ class EndpointVocabulary(BaseEndpoint):
         image=cls.GALLERY["button_2.png"],
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_import clicked"),
+        command=cls.__open_import_pop_up,
         relief="flat"
     )
 
@@ -360,7 +359,7 @@ class EndpointVocabulary(BaseEndpoint):
     cls.table_container.pack_propagate(False)
     cls.table = ttk.Treeview(cls.table_container,
                              columns=("word", "translation", "accuracy"),
-                             selectmode="browse",
+                             selectmode="extended",
                              padding=10,
                              show="headings"
                              )
@@ -379,6 +378,13 @@ class EndpointVocabulary(BaseEndpoint):
     )
 
     cls.table.configure(yscrollcommand=cls.table_scrollbar.set)
+    cls.table.bind("<<TreeviewSelect>>", cls.__handle_items_selection)
+
+    cls.row_buttons = tk.Frame(cls.canvas, background=COLOR_YELLOW)
+
+    cls.delete_words_button = ctk.CTkButton(cls.row_buttons, text="DEL", width=30,
+                                            height=30, command=cls.__delete_words)
+    cls.delete_words_button.pack(side=tk.LEFT)
 
   @classmethod
   def enter(cls):
@@ -440,3 +446,88 @@ class EndpointVocabulary(BaseEndpoint):
                              f"{max([t.accuracy for t in word.translations[lang_to]])}%"
                           )
                          )
+
+  @classmethod
+  def __open_add_word_pop_up(cls):
+    cls.popup_add = AddNewWordPopUp()
+    cls.popup_add.bind("<Destroy>", cls.__add_word)
+
+  @classmethod
+  def __open_import_pop_up(cls):
+    cls.popup_import = ImportFromFilePopUP()
+    cls.popup_import.bind("<Destroy>", cls.__import_from_file)
+
+  @classmethod
+  def __add_word(cls, e: tk.Event):
+    if e.widget != e.widget.winfo_toplevel():
+      return
+
+    if (word := cls.popup_add.word) is None or (translations := cls.popup_add.translations) is None:
+      return
+
+    db = Database()
+    lang_from, lang_to = cls.lang_picker.get_lang_pair()
+    word = Word(word, lang_from)
+    db.vocabulary.add_word(word)
+    word = db.vocabulary.get_word(word)
+
+    for translation in translations:
+      translation = Word(translation, lang_to)
+      db.vocabulary.add_word(translation)
+      translation = db.vocabulary.get_word(translation)
+      db.vocabulary.add_translation(word, translation)
+
+    cls.table.insert('',
+                     tk.END,
+                     values=(
+                         word.word,
+                         word.get_translations_string(lang_to),
+                         f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                     )
+                     )
+
+  @classmethod
+  def __import_from_file(cls, e: tk.Event):
+    if e.widget != e.widget.winfo_toplevel():
+      return
+
+    if cls.popup_import.file_path is None or not cls.popup_import.file_path:
+      return
+
+    with open(cls.popup_import.file_path) as file:
+      lang_from, lang_to = cls.lang_picker.get_lang_pair()
+
+      db = Database()
+      for line in file:
+        print("line", line)
+        word, translations = line.split("|")
+        word = Word(word.strip().lower(), lang_from)
+        db.vocabulary.add_word(word)
+        word = db.vocabulary.get_word(word)
+
+        translations = list(map(lambda x: Word(x.strip().lower(), lang_to), translations.split(',')))
+        for translation in translations:
+          db.vocabulary.add_word(translation)
+          translation = db.vocabulary.get_word(translation)
+          db.vocabulary.add_translation(word, translation)
+        cls.__update_table("")
+
+  @classmethod
+  def __handle_items_selection(cls, e: tk.Event):
+    if cls.table.selection():
+      cls.row_buttons.place(anchor="center", relx=.8, rely=.25)
+    else:
+      cls.row_buttons.place_forget()
+
+  @classmethod
+  def __delete_words(cls):
+    item_ids = cls.table.selection()
+
+    for s in cls.table.selection():
+      lang_from, _ = cls.lang_picker.get_lang_pair()
+      word = Word(cls.table.item(s)["values"][0], lang_from)
+      word = Database().vocabulary.get_word(word)
+      Database().vocabulary.delete_word(word)
+
+    cls.table.delete(*item_ids)
+    print("button del clicked")

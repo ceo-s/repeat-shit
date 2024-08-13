@@ -74,7 +74,6 @@ class Vocabulary:
     lst = self.__data[word.language]
     if word not in lst:
       lst.append(word)
-      # return word
 
   def add_translation(self, word: "Word", translation: "Word"):
     word = self.get_word(word)
