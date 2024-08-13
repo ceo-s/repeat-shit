@@ -1,6 +1,7 @@
 from src.colors import *
 from src.gallery import Gallery
 from tkinter import ttk, Canvas, Button, Entry
+from tkinter.filedialog import askopenfilename
 from typing import Any, Type
 from abc import ABC, abstractmethod
 
@@ -46,6 +47,7 @@ class BaseEndpoint(ABC):
   @classmethod
   def leave(cls):
     cls.canvas.place_forget()
+    cls.canvas.delete("all")
 
 
 class EndpointMainMenu(BaseEndpoint):
@@ -358,17 +360,34 @@ class EndpointVocabulary(BaseEndpoint):
     cls.table_container.pack_propagate(False)
     cls.table = ttk.Treeview(cls.table_container,
                              columns=("word", "translation", "accuracy"),
-                             show="headings")
+                             selectmode="browse",
+                             padding=10,
+                             show="headings"
+                             )
+
     cls.table.heading("word", text="Word")
     cls.table.heading("translation", text="Translation")
-    cls.table.heading("accuracy", text="%")
-    cls.table.column(0, anchor="w", width=400)
-    cls.table.column(1, anchor="w", width=400)
-    cls.table.column(2, anchor="center", width=100)
+    cls.table.heading("accuracy", text="✅")
+    cls.table_scrollbar = ctk.CTkScrollbar(
+      cls.table_container,
+      bg_color=COLOR_YELLOW,
+      fg_color=COLOR_YELLOW,
+      button_color=COLOR_BROWN,
+      button_hover_color=COLOR_GRAY,
+      orientation="vertical",
+      command=cls.table.yview
+    )
+
+    cls.table.configure(yscrollcommand=cls.table_scrollbar.set)
 
   @classmethod
   def enter(cls):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    cls.table.column(0, anchor="w", width=300, minwidth=300, stretch=False)
+    cls.table.column(1, anchor="w", width=500, minwidth=500, stretch=False)
+    cls.table.column(2, anchor="center", width=100, minwidth=400, stretch=False)
+    print(cls.table["columns"])
 
     cls.lang_picker.build()
 
@@ -399,10 +418,12 @@ class EndpointVocabulary(BaseEndpoint):
         height=44.0
     )
 
-    cls.table_container.place(x=50, y=224, anchor='nw')
-    cls.table.pack(fill="both", expand=True)
-
     cls.lang_picker.place(anchor="center", relx=.5, rely=.2)
+    cls.table_container.place(x=50, y=224, anchor='nw')
+    cls.table_scrollbar.pack(side="right", fill=tk.Y)
+    cls.table.pack(side="right", fill="both", expand=True)
+
+    cls.__update_table("")
 
   @classmethod
   def __update_table(cls, _: str):
@@ -416,6 +437,6 @@ class EndpointVocabulary(BaseEndpoint):
                          values=(
                              word.word,
                              word.get_translations_string(lang_to),
-                             f"{max([t.accuracy for t in word.translations[lang_to]])}"
-                         )
+                             f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                          )
                          )

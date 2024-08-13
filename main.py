@@ -37,12 +37,15 @@ def init_styles(root: Tk):
   style.configure("LangPicker.TCombobox",
                   font=("JetBrainsMonoRoman Regular", 24 * -1),
                   background='green',
-                  foreground='white')
+                  foreground='white',
+                  )
 
   style.configure("Treeview.Heading",
                   font=('JetBrainsMonoRoman ', 28, 'bold'),
                   padding=(10, 10),
-                  background=COLOR_YELLOW)
+                  background=COLOR_BROWN,
+                  relief="flat",
+                  )
 
   style.configure("Treeview",
                   highlightthickness=0,
@@ -50,10 +53,15 @@ def init_styles(root: Tk):
                   rowheight=34,
                   font=('JetBrainsMonoRoman Regular', 15),
                   background=COLOR_BROWN,
-                  foreground=COLOR_GRAY)
+                  foreground=COLOR_GRAY,
+                  )
   style.map("Treeview",
             background=[("selected", COLOR_YELLOW)],
             foreground=[("selected", COLOR_BLACK)],
+            )
+  style.map("Treeview.Heading",
+            background=[("active", COLOR_BROWN)],
+            foreground=[("active", COLOR_GRAY)],
             )
   style.layout("Treeview", [('Treeview.treearea', {'sticky': 'nswe'})])
 
