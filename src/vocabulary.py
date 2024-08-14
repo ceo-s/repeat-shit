@@ -123,6 +123,9 @@ class Vocabulary:
 
     stats = []
     for word in self.get(lang_from):
+      if len(word.translations[lang_to]) == 0:
+        continue
+
       max_accuracy = max([t.accuracy for t in word.translations[lang_to]])
       repeat_count = sum([t._n_repeat for t in word.translations[lang_to]])
       stats.append((max_accuracy, repeat_count, word))

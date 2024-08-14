@@ -1,7 +1,7 @@
 from src.consts import *
 from src.gallery import Gallery
 from tkinter import ttk, Canvas, Button, Entry
-from typing import Any, Type
+from typing import Literal
 from abc import ABC, abstractmethod
 
 import tkinter as tk
@@ -19,12 +19,13 @@ def init_endpoints(root: ctk.CTk):
   EndpointMainMenu.init()
   EndpointConfigurateExercise.init()
   EndpointSolve.init()
+  EndpointExerciseResult.init()
   EndpointVocabulary.init()
 
 
 def build_main_endpoint():
   # EndpointMainMenu.enter()
-  EndpointVocabulary.enter()
+  EndpointConfigurateExercise.enter()
 
 
 class BaseEndpoint(ABC):
@@ -196,6 +197,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
 
     cls.lang_picker.place(anchor="center", relx=.5, rely=.33)
     cls.lang_picker.add_callback("<<LangChange>>", cls.__set_word_count_at_lang_change)
+    cls.lang_picker.add_callback("<<LangSwap>>", cls.__set_word_count_at_lang_change)
     cls.lang_picker.build()
     cls.word_count_slider.place(anchor="center", relx=.5, rely=.58)
     cls.__set_word_count_at_lang_change("")
@@ -285,11 +287,11 @@ class EndpointSolve(BaseEndpoint):
         image=cls.GALLERY["image_1.png"]
     )
 
-    entry_bg_1 = cls.canvas.create_image(
-        352.5,
-        323.5,
-        image=cls.GALLERY["entry_1.png"]
-    )
+    # entry_bg_1 = cls.canvas.create_image(
+    #     352.5,
+    #     323.5,
+    #     image=cls.GALLERY["entry_1.png"]
+    # )
 
     cls.button_back.place(
         x=20.0,
@@ -299,6 +301,7 @@ class EndpointSolve(BaseEndpoint):
     )
 
     cls.exercise_widget.place(anchor="s", relx=.5, rely=1)
+    cls.exercise_widget.bind("<<FinishExercise>>", cls.__go_to_results)
     cls.exercise_widget.build()
 
   @classmethod
@@ -309,6 +312,117 @@ class EndpointSolve(BaseEndpoint):
   def leave(cls):
     cls.exercise_widget.delete("all")
     super().leave()
+
+  @classmethod
+  def __go_to_results(cls, e: tk.Event):
+    cls.leave()
+    EndpointExerciseResult.initialize_table(*cls.exercise_widget.get_results())
+    EndpointExerciseResult.enter()
+    print("No fucking way", e)
+
+
+class EndpointExerciseResult(BaseEndpoint):
+  @classmethod
+  def init(cls):
+    cls.canvas = Canvas(
+        cls.PARENT,
+        bg=COLOR_YELLOW,
+        height=1000,
+        width=1200,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+    cls.stats = ctk.CTkLabel(cls.canvas,
+                             font=FONT(30, weight=FONT_WEIGHT_BOLD),
+                             fg_color=COLOR_YELLOW,
+                             text_color=COLOR_GRAY,
+                             )
+
+    cls.button_finish = ctk.CTkButton(cls.canvas,
+                                      height=40,
+                                      width=200,
+                                      text="Finish",
+                                      text_color=COLOR_WHITE,
+                                      anchor="s",
+                                      font=FONT(28, weight=FONT_WEIGHT_BOLD),
+                                      corner_radius=4,
+                                      bg_color=COLOR_YELLOW,
+                                      fg_color=COLOR_BLUE,
+                                      hover_color=COLOR_PINK1,
+                                      command=lambda: cls.leave() or EndpointMainMenu.enter())
+
+    cls.table_container = tk.Frame(cls.canvas, height=460, width=900, background=COLOR_BLUE)
+    cls.table_container.pack_propagate(False)
+    cls.table = ttk.Treeview(cls.table_container,
+                             columns=("word", "answer", "translation", "accuracy"),
+                             selectmode="extended",
+                             padding=10,
+                             show="headings"
+                             )
+
+    cls.table.heading("word", text="Word")
+    cls.table.heading("answer", text="Answer")
+    cls.table.heading("translation", text="Translation")
+    cls.table.heading("accuracy", text="%")
+    cls.table.tag_configure("right", background="green")
+    cls.table.tag_configure("wrong", background="red")
+
+    cls.table_scrollbar = ctk.CTkScrollbar(
+      cls.table_container,
+      bg_color=COLOR_YELLOW,
+      fg_color=COLOR_YELLOW,
+      button_color=COLOR_BROWN,
+      button_hover_color=COLOR_GRAY,
+      orientation="vertical",
+      command=cls.table.yview
+    )
+
+    cls.table.configure(yscrollcommand=cls.table_scrollbar.set)
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor="center", relx=.5, rely=.5)
+    cls.stats.pack()
+    cls.table_container.pack()
+    cls.table_scrollbar.pack(side="right", fill=tk.Y)
+    cls.table.pack(side="right", fill="both", expand=True)
+    cls.button_finish.pack()
+
+  @classmethod
+  def initialize_table(cls, words: list[Word], user_translations: list[Word]):
+    cls.table.delete(*cls.table.get_children())
+    lang_to = user_translations[0].language
+    right_answers = 0
+
+    for word, translation in zip(words, user_translations):
+      tag: Literal["right", "wrong"] = "wrong"
+      try:
+        translation = Database().vocabulary.get_word(translation)
+      except KeyError:
+        pass
+
+      for t in word.translations[lang_to]:
+        if t.translation == translation:
+          tag = "right"
+          t.repeat(True)
+          break
+
+      translation_string = translation.word if tag == "right" else word.get_translations_string(lang_to)
+
+      cls.table.insert('',
+                       tk.END,
+                       values=(
+                           word.word,
+                           translation.word,
+                           translation_string,
+                           f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                          ),
+                       tags=(tag,)
+                       )
+      right_answers += 1 if tag == "right" else 0
+
+    cls.stats.configure(True, text=f"{right_answers}/{len(words)}")
 
 
 class EndpointVocabulary(BaseEndpoint):

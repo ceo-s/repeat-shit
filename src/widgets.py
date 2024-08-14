@@ -208,104 +208,105 @@ class WordCountSlider(BaseWidget):
     self.itemconfig(self.__text_id, text=f"{int(value)}/{self.__max_value}")
 
 
-class VocabularyTable(BaseWidget):
+# class VocabularyTable(BaseWidget):
 
-  def init(self):
-    self.configure(height=460, width=900, bg=COLOR_BROWN, highlightthickness=0)
-    self.head = tk.Canvas(self, height=60, width=900,
-                          bg=COLOR_BROWN, highlightthickness=0)
-    self.body = tk.Canvas(self, height=400, width=900,
-                          bg=COLOR_BROWN, highlightthickness=0)
-    self.body_scrollbar = tk.Scrollbar(self, orient='vertical')
-    self.body_scrollbar.configure(command=self.body.yview)
-    self.body.configure(yscrollcommand=self.body_scrollbar.set)
-    self.body.bind("<MouseWheel>", self.__on_mouse_scroll)
-    self.body.bind("<Button-4>", self.__on_mouse_scroll)
-    self.body.bind("<Button-5>", self.__on_mouse_scroll)
-    self.content: list[Word] = []
+#   def init(self):
+#     self.configure(height=460, width=900, bg=COLOR_BROWN, highlightthickness=0)
+#     self.head = tk.Canvas(self, height=60, width=900,
+#                           bg=COLOR_BROWN, highlightthickness=0)
+#     self.body = tk.Canvas(self, height=400, width=900,
+#                           bg=COLOR_BROWN, highlightthickness=0)
+#     self.body_scrollbar = tk.Scrollbar(self, orient='vertical')
+#     self.body_scrollbar.configure(command=self.body.yview)
+#     self.body.configure(yscrollcommand=self.body_scrollbar.set)
+#     self.body.bind("<MouseWheel>", self.__on_mouse_scroll)
+#     self.body.bind("<Button-4>", self.__on_mouse_scroll)
+#     self.body.bind("<Button-5>", self.__on_mouse_scroll)
+#     self.content: list[Word] = []
 
-  def build(self):
-    self.__del_rows()
-    self.head.pack()
-    self.body_scrollbar.pack(side=tk.RIGHT, fill='y')
-    self.body.pack()
+#   def build(self):
+#     self.__del_rows()
+#     self.head.pack()
+#     self.body_scrollbar.pack(side=tk.RIGHT, fill='y')
+#     self.body.pack()
 
-    self.head.create_text(
-        30.0,
-        25.0,
-        anchor="nw",
-        text="Word:",
-        fill="#000000",
-        font=FONT(24)
-    )
+#     self.head.create_text(
+#         30.0,
+#         25.0,
+#         anchor="nw",
+#         text="Word:",
+#         fill="#000000",
+#         font=FONT(24)
+#     )
 
-    self.head.create_text(
-        350.0,
-        25.0,
-        anchor="nw",
-        text="Translation:",
-        fill="#000000",
-        font=FONT(24)
-    )
+#     self.head.create_text(
+#         350.0,
+#         25.0,
+#         anchor="nw",
+#         text="Translation:",
+#         fill="#000000",
+#         font=FONT(24)
+#     )
 
-    self.head.create_text(
-        770.0,
-        25.0,
-        anchor="nw",
-        text="Accuracy:",
-        fill="#000000",
-        font=FONT(24)
-    )
+#     self.head.create_text(
+#         770.0,
+#         25.0,
+#         anchor="nw",
+#         text="Accuracy:",
+#         fill="#000000",
+#         font=FONT(24)
+#     )
 
-    self.head.create_rectangle(
-        30.0,
-        57.0,
-        870.0,
-        58.0,
-        fill="#000000",
-        outline="")
+#     self.head.create_rectangle(
+#         30.0,
+#         57.0,
+#         870.0,
+#         58.0,
+#         fill="#000000",
+#         outline="")
 
-    self.__add_rows()
+#     self.__add_rows()
 
-  def update_content(self, new_content: list[Word]):
-    self.content.clear()
-    self.content.extend(new_content)
+#   def update_content(self, new_content: list[Word]):
+#     self.content.clear()
+#     self.content.extend(new_content)
 
-  def __add_rows(self):
+#   def __add_rows(self):
 
-    # Bullshit lines because otherways canvas somehow
-    # places everything relative to first placed element now
-    self.body.create_rectangle(0, 10, 0, 10,
-                               fill=COLOR_BROWN,
-                               outline=COLOR_BROWN)
-    # Endbullshit lines
+#     # Bullshit lines because otherways canvas somehow
+#     # places everything relative to first placed element now
+#     self.body.create_rectangle(0, 10, 0, 10,
+#                                fill=COLOR_BROWN,
+#                                outline=COLOR_BROWN)
+#     # Endbullshit lines
 
-    for i, row in enumerate(self.content, start=1):
-      self.body.create_text(35, 30 * i, anchor="w", text=row.word,
-                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
-      self.body.create_text(355, 30 * i, anchor="w", text=row.word,
-                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
-      self.body.create_text(803, 30 * i, anchor="w", text=f"{row.language.value}%",
-                            fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
+#     for i, row in enumerate(self.content, start=1):
+#       self.body.create_text(35, 30 * i, anchor="w", text=row.word,
+#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
+#       self.body.create_text(355, 30 * i, anchor="w", text=row.word,
+#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
+#       self.body.create_text(803, 30 * i, anchor="w", text=f"{row.language.value}%",
+#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
 
-    self.body.configure(scrollregion=self.body.bbox("all"))
+#     self.body.configure(scrollregion=self.body.bbox("all"))
 
-  def __del_rows(self):
-    self.body.delete("all")
-    self.body_scrollbar.pack_forget()
-    self.body.configure(scrollregion=(0, 0, 0, 0))
+#   def __del_rows(self):
+#     self.body.delete("all")
+#     self.body_scrollbar.pack_forget()
+#     self.body.configure(scrollregion=(0, 0, 0, 0))
 
-  def __on_mouse_scroll(self, e: tk.Event):
-    print(f"Scrolling with wheel {e}")
-    if e.num == 4:
-      self.body.yview_scroll(-1, 'units')
-    if e.num == 5:
-      self.body.yview_scroll(1, 'units')
+#   def __on_mouse_scroll(self, e: tk.Event):
+#     print(f"Scrolling with wheel {e}")
+#     if e.num == 4:
+#       self.body.yview_scroll(-1, 'units')
+#     if e.num == 5:
+#       self.body.yview_scroll(1, 'units')
 
 
 class ExerciseWidget(BaseWidget):
 
   def init(self):
+    self.event_add("<<FinishExercise>>", "None")
     self.__initialized = False
     self.configure(width=800, height=400, background=COLOR_YELLOW, highlightthickness=0)
     self.__entry = ctk.CTkEntry(
@@ -368,20 +369,24 @@ class ExerciseWidget(BaseWidget):
     self.__i_word = 0
     self.__initialized = True
 
+  def get_results(self) -> tuple[list[Word], list[Word]]:
+    return self.__words, self.__results
+
   def __handle_submit(self):
     translation = self.__entry.get()
     self.__check_translation(translation)
     self.__i_word += 1
-    if self.__i_word == self.__n_words:
+    if self.__i_word >= self.__n_words:
       self.__initialized = False
+      self.__entry.delete(0, tk.END)
+      self.event_generate("<<FinishExercise>>")
       return
     self.__render_next_word()
 
   def __check_translation(self, translation: str):
-    self.__results.append(translation == self.__words[self.__i_word].word)
+    self.__results.append(Word(translation, self.__language_to))
 
   def __render_next_word(self):
-
     self.itemconfig(self.__word_id, text=self.__words[self.__i_word].word)
     self.itemconfig(self.__counter_string_id, text=f"{self.__i_word + 1}/{self.__n_words}")
     self.__entry.delete(0, ctk.END)
