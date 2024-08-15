@@ -165,7 +165,7 @@ class WordCountSlider(BaseWidget):
     self.__text_id: int = 0
 
   def init(self):
-    self.configure(width=500, height=100, bg=COLOR_YELLOW, highlightthickness=0, relief='ridge')
+    self.configure(width=500, height=110, bg=COLOR_YELLOW, highlightthickness=0, relief='ridge')
 
     self.__slider = ctk.CTkSlider(self, from_=0, to=1,
                                   command=self.__update_label_value,
@@ -177,9 +177,14 @@ class WordCountSlider(BaseWidget):
                                   button_hover_color=COLOR_PINK2,
                                   )
 
+    self.__label = ctk.CTkLabel(self,
+                                text="",
+                                text_color=COLOR_GRAY,
+                                font=FONT(54, weight=FONT_WEIGHT_BOLD),
+                                )
+
   def build(self):
-    self.__text_id = self.create_text(250.0, 35.0, fill=COLOR_GRAY, anchor="center", text=f"{int(self.get())}/{self.__max_value}",
-                                      font=FONT(40, weight=FONT_WEIGHT_BOLD))
+    self.__label.place(anchor="center", relx=.5, rely=.24)
     self.__slider.place(anchor="center", relx=.5, rely=.7)
 
   def set(self, value: int | float):
@@ -196,12 +201,14 @@ class WordCountSlider(BaseWidget):
       self.__slider.configure(state="normal")
       self.__slider.configure(to=num)
 
-    self.itemconfig(self.__text_id, text=f"{int(self.get())}/{num}")
+    current = int(self.get())
+    current = current if current < num else num
+    self.__label.configure(text=f"{current}/{num}")
     self.__slider.set(self.get())
     self.__max_value = num
 
   def __update_label_value(self, value: float):
-    self.itemconfig(self.__text_id, text=f"{int(value)}/{self.__max_value}")
+    self.__label.configure(text=f"{int(value)}/{self.__max_value}")
 
 
 class ExerciseWidget(BaseWidget):

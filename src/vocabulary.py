@@ -26,7 +26,6 @@ class Translation:
     return self._n_sucess / (self._n_repeat + 0.0001)
 
   def repeat(self, sucess: bool):
-    print("Repeating! Sucess =", sucess)
     self._n_repeat += 1
     self._n_sucess += int(sucess)
 

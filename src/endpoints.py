@@ -56,17 +56,20 @@ class EndpointMainMenu(BaseEndpoint):
     cls.GALLERY = Gallery("assets/main_menu")
     cls.canvas = Canvas(
         cls.PARENT,
-        bg="#F0DBAF",
+        bg=COLOR_YELLOW,
         height=500,
         width=700,
         bd=0,
         highlightthickness=0,
         relief="ridge"
     )
+    cls.canvas.pack_propagate(False)
 
     cls.button_exercise = Button(
         cls.canvas,
         image=cls.GALLERY["button_1.png"],
+        background=COLOR_YELLOW,
+        activebackground=COLOR_PINK1,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: cls.leave() or EndpointConfigurateExercise.enter(),
@@ -76,6 +79,8 @@ class EndpointMainMenu(BaseEndpoint):
     cls.button_read = Button(
         cls.canvas,
         image=cls.GALLERY["button_4.png"],
+        background=COLOR_YELLOW,
+        activebackground=COLOR_PINK1,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: print("button_read clicked"),
@@ -85,6 +90,8 @@ class EndpointMainMenu(BaseEndpoint):
     cls.button_translate = Button(
         cls.canvas,
         image=cls.GALLERY["button_3.png"],
+        background=COLOR_YELLOW,
+        activebackground=COLOR_PINK1,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: print("button_translate clicked"),
@@ -94,11 +101,17 @@ class EndpointMainMenu(BaseEndpoint):
     cls.button_vocabulary = Button(
         cls.canvas,
         image=cls.GALLERY["button_2.png"],
+        background=COLOR_YELLOW,
+        activebackground=COLOR_PINK1,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: cls.leave() or EndpointVocabulary.enter(),
         relief="flat"
     )
+    cls.button_exercise.pack(side=tk.TOP, pady=(180, 0))
+    cls.button_read.pack(side=tk.TOP, pady=(5, 0))
+    cls.button_translate.pack(pady=(5, 0))
+    cls.button_vocabulary.pack(pady=(5, 0))
 
   @classmethod
   def enter(cls):
@@ -110,34 +123,6 @@ class EndpointMainMenu(BaseEndpoint):
         image=cls.GALLERY["image_1.png"]
     )
 
-    cls.button_exercise.place(
-        x=216.0,
-        y=159.0,
-        width=268.0,
-        height=64.0
-    )
-
-    cls.button_read.place(
-        x=216.0,
-        y=239.0,
-        width=268.0,
-        height=64.0
-    )
-
-    cls.button_translate.place(
-        x=216.0,
-        y=319.0,
-        width=268.0,
-        height=64.0
-    )
-
-    cls.button_vocabulary.place(
-        x=216.0,
-        y=399.0,
-        width=268.0,
-        height=64.0
-    )
-
 
 class EndpointConfigurateExercise(BaseEndpoint):
 
@@ -146,7 +131,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.GALLERY = Gallery("assets/configurate_exercise")
     cls.canvas = Canvas(
         cls.PARENT,
-        bg="#F0DBAF",
+        bg=COLOR_YELLOW,
         height=560,
         width=700,
         bd=0,
@@ -190,10 +175,6 @@ class EndpointConfigurateExercise(BaseEndpoint):
                              relief="flat"
                              )
 
-  @classmethod
-  def enter(cls) -> None:
-    cls.canvas.place(anchor='center', relx=.5, rely=.5)
-
     cls.lang_picker.place(anchor="center", relx=.5, rely=.33)
     cls.lang_picker.bind("<<LangChange>>", lambda e: cls.__set_word_count_at_lang_change())
     cls.lang_picker.bind("<<LangSwap>>", lambda e: cls.__set_word_count_at_lang_change())
@@ -201,12 +182,6 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.word_count_slider.place(anchor="center", relx=.5, rely=.58)
     cls.__set_word_count_at_lang_change()
     cls.word_count_slider.build()
-
-    image_1 = cls.canvas.create_image(
-        350.0,
-        84.0,
-        image=cls.GALLERY["image_1.png"]
-    )
 
     cls.add_new_word_checkbox.place(anchor="center", relx=.5, rely=.75)
 
@@ -217,6 +192,16 @@ class EndpointConfigurateExercise(BaseEndpoint):
         y=60.0,
         width=44.0,
         height=44.0
+    )
+
+  @classmethod
+  def enter(cls) -> None:
+    cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    image_1 = cls.canvas.create_image(
+        350.0,
+        84.0,
+        image=cls.GALLERY["image_1.png"]
     )
 
   @classmethod
@@ -275,6 +260,16 @@ class EndpointSolve(BaseEndpoint):
 
     cls.exercise_widget = ExerciseWidget(cls.canvas)
 
+    cls.button_back.place(
+        x=20.0,
+        y=60.0,
+        width=44.0,
+        height=44.0
+    )
+
+    cls.exercise_widget.place(anchor="s", relx=.5, rely=1)
+    cls.exercise_widget.bind("<<FinishExercise>>", cls.__go_to_results)
+
   @classmethod
   def enter(cls):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
@@ -285,21 +280,6 @@ class EndpointSolve(BaseEndpoint):
         image=cls.GALLERY["image_1.png"]
     )
 
-    # entry_bg_1 = cls.canvas.create_image(
-    #     352.5,
-    #     323.5,
-    #     image=cls.GALLERY["entry_1.png"]
-    # )
-
-    cls.button_back.place(
-        x=20.0,
-        y=60.0,
-        width=44.0,
-        height=44.0
-    )
-
-    cls.exercise_widget.place(anchor="s", relx=.5, rely=1)
-    cls.exercise_widget.bind("<<FinishExercise>>", cls.__go_to_results)
     cls.exercise_widget.build()
 
   @classmethod
@@ -376,15 +356,15 @@ class EndpointExerciseResult(BaseEndpoint):
     )
 
     cls.table.configure(yscrollcommand=cls.table_scrollbar.set)
-
-  @classmethod
-  def enter(cls):
-    cls.canvas.place(anchor="center", relx=.5, rely=.5)
     cls.stats.pack()
     cls.table_container.pack()
     cls.table_scrollbar.pack(side="right", fill=tk.Y)
     cls.table.pack(side="right", fill="both", expand=True)
     cls.button_finish.pack()
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor="center", relx=.5, rely=.5)
 
   @classmethod
   def initialize_table(cls, words: list[Word], user_translations: list[Word]):
@@ -495,21 +475,11 @@ class EndpointVocabulary(BaseEndpoint):
                                             height=30, command=cls.__delete_words)
     cls.delete_words_button.pack(side=tk.LEFT)
 
-  @classmethod
-  def enter(cls):
-    cls.canvas.place(anchor='center', relx=.5, rely=.5)
-
     cls.table.column(0, anchor="w", width=300, minwidth=300, stretch=False)
     cls.table.column(1, anchor="w", width=500, minwidth=500, stretch=False)
     cls.table.column(2, anchor="center", width=100, minwidth=400, stretch=False)
 
     cls.lang_picker.build()
-
-    image_1 = cls.canvas.create_image(
-        500.0,
-        84.0,
-        image=cls.GALLERY["image_1.png"]
-    )
 
     cls.button_add_word.place(
         x=50.0,
@@ -536,6 +506,16 @@ class EndpointVocabulary(BaseEndpoint):
     cls.table_container.place(x=50, y=224, anchor='nw')
     cls.table_scrollbar.pack(side="right", fill=tk.Y)
     cls.table.pack(side="right", fill="both", expand=True)
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    image_1 = cls.canvas.create_image(
+        500.0,
+        84.0,
+        image=cls.GALLERY["image_1.png"]
+    )
 
     cls.__update_table()
 
