@@ -23,9 +23,10 @@ class Translation:
 
   @property
   def accuracy(self) -> float:
-    return self._n_repeat / (self._n_repeat + 0.0001)
+    return self._n_sucess / (self._n_repeat + 0.0001)
 
   def repeat(self, sucess: bool):
+    print("Repeating! Sucess =", sucess)
     self._n_repeat += 1
     self._n_sucess += int(sucess)
 
@@ -132,7 +133,9 @@ class Vocabulary:
 
     stats.sort()
 
-    return [stat[2] for stat in stats[:n]]
+    stats = [stat[2] for stat in stats[:n]]
+    random.shuffle(stats)
+    return stats
 
   def print(self):
     print("Vocabulary:")

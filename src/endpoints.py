@@ -24,8 +24,7 @@ def init_endpoints(root: ctk.CTk):
 
 
 def build_main_endpoint():
-  # EndpointMainMenu.enter()
-  EndpointConfigurateExercise.enter()
+  EndpointMainMenu.enter()
 
 
 class BaseEndpoint(ABC):
@@ -227,7 +226,6 @@ class EndpointConfigurateExercise(BaseEndpoint):
 
   @classmethod
   def start_exercise(cls):
-    print("Starting exercise!")
     cls.leave()
     lang_from, lang_to = cls.lang_picker.get_lang_pair()
     word_count = cls.word_count_slider.get()
@@ -318,7 +316,6 @@ class EndpointSolve(BaseEndpoint):
     cls.leave()
     EndpointExerciseResult.initialize_table(*cls.exercise_widget.get_results())
     EndpointExerciseResult.enter()
-    print("No fucking way", e)
 
 
 class EndpointExerciseResult(BaseEndpoint):
@@ -405,22 +402,20 @@ class EndpointExerciseResult(BaseEndpoint):
       for t in word.translations[lang_to]:
         if t.translation == translation:
           tag = "right"
-          t.repeat(True)
           break
 
-      translation_string = translation.word if tag == "right" else word.get_translations_string(lang_to)
-
+      right_answers += int(tag == "right")
+      t.repeat(tag == "right")
       cls.table.insert('',
                        tk.END,
                        values=(
                            word.word,
                            translation.word,
-                           translation_string,
-                           f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                           word.get_translations_string(lang_to),
+                           f"{int(100 * max([t.accuracy for t in word.translations[lang_to]]))}%"
                           ),
                        tags=(tag,)
                        )
-      right_answers += 1 if tag == "right" else 0
 
     cls.stats.configure(True, text=f"{right_answers}/{len(words)}")
 
@@ -556,7 +551,7 @@ class EndpointVocabulary(BaseEndpoint):
                          values=(
                              word.word,
                              word.get_translations_string(lang_to),
-                             f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                             f"{int(100 * max([t.accuracy for t in word.translations[lang_to]]))}%"
                           )
                          )
 
@@ -595,7 +590,7 @@ class EndpointVocabulary(BaseEndpoint):
                      values=(
                          word.word,
                          word.get_translations_string(lang_to),
-                         f"{max([t.accuracy for t in word.translations[lang_to]])}%"
+                         f"{int(100 * max([t.accuracy for t in word.translations[lang_to]]))}%"
                      )
                      )
 
