@@ -46,6 +46,8 @@ class LanguagePicker(BaseWidget):
   LANG_LIST = ["Russian", "English", "Italian", "French"]
 
   def init(self):
+    self.event_add("<<LangSwap>>", "None")
+    self.event_add("<<LangChange>>", "None")
     self.pack_propagate(True)
     self.configure(height=50, width=400, background=COLOR_YELLOW, highlightthickness=0, relief='ridge')
     self.__choose_lang_from = ctk.CTkOptionMenu(self, 180, 50, 6,
@@ -63,7 +65,7 @@ class LanguagePicker(BaseWidget):
     CTkScrollableDropdown(self.__choose_lang_from,
                           id_="from",
                           values=self.LANG_LIST,
-                          command=self.__on_lang_change,
+                          command=lambda s: self.__swap_if_both_same(s) or self.__on_lang_change(),
                           button_color=COLOR_PINK1,
                           text_color=COLOR_YELLOW,
                           scrollbar_button_color=COLOR_PINK2,
@@ -75,8 +77,8 @@ class LanguagePicker(BaseWidget):
                           )
 
     self.__choose_lang_to = ctk.CTkOptionMenu(self, 180, 50, 6,
-                                              font=FONT(20, FONT_WEIGHT_REGULAR),
-                                              dropdown_font=FONT(20, FONT_WEIGHT_REGULAR),
+                                              font=FONT(20, weight=FONT_WEIGHT_BOLD),
+                                              dropdown_font=FONT(20),
                                               values=self.LANG_LIST,
                                               fg_color=COLOR_PINK1,
                                               text_color=COLOR_YELLOW,
@@ -90,7 +92,7 @@ class LanguagePicker(BaseWidget):
     CTkScrollableDropdown(self.__choose_lang_to,
                           id_="to",
                           values=self.LANG_LIST,
-                          command=self.__on_lang_change,
+                          command=lambda s: self.__swap_if_both_same(s) or self.__on_lang_change(),
                           button_color=COLOR_PINK1,
                           text_color=COLOR_YELLOW,
                           scrollbar_button_color=COLOR_PINK2,
@@ -114,8 +116,6 @@ class LanguagePicker(BaseWidget):
                                        command=self.__swap_picker_values,
                                        relief="flat")
 
-    self.__callbacks: dict[str, list[Callable[[str], None]]] = {"<<LangSwap>>": [], "<<LangChange>>": []}
-    self.add_callback("<<LangChange>>", self.__swap_if_both_same)
     self.__val_from = self.__choose_lang_from.get()
     self.__val_to = self.__choose_lang_to.get()
 
@@ -135,19 +135,15 @@ class LanguagePicker(BaseWidget):
   def get_lang_pair(self) -> tuple[Language, Language]:
     return Language(self.__choose_lang_from.get().lower().strip()), Language(self.__choose_lang_to.get().lower().strip())
 
-  def __on_lang_change(self, val: str):
-    for callback in self.__callbacks["<<LangChange>>"]:
-      callback(val)
+  def __on_lang_change(self) -> None:
+    self.event_generate("<<LangChange>>")
 
-  def __on_lang_swap(self):
-    for callback in self.__callbacks["<<LangSwap>>"]:
-      callback("")
+  def __on_lang_swap(self) -> None:
+    self.event_generate("<<LangSwap>>")
 
-  def add_callback(self, event: Literal["<<LangSwap>>", "<<LangChange>>"], callback: Callable[[str], None]):
-    self.__callbacks[event].append(callback)
-
-  def __swap_if_both_same(self, val: str):
+  def __swap_if_both_same(self, val: str) -> None:
     id_, val = val.split(":")
+
     if id_ == "from":
       if self.__val_to == val:
         self.__choose_lang_to.set(self.__val_from)
@@ -206,101 +202,6 @@ class WordCountSlider(BaseWidget):
 
   def __update_label_value(self, value: float):
     self.itemconfig(self.__text_id, text=f"{int(value)}/{self.__max_value}")
-
-
-# class VocabularyTable(BaseWidget):
-
-#   def init(self):
-#     self.configure(height=460, width=900, bg=COLOR_BROWN, highlightthickness=0)
-#     self.head = tk.Canvas(self, height=60, width=900,
-#                           bg=COLOR_BROWN, highlightthickness=0)
-#     self.body = tk.Canvas(self, height=400, width=900,
-#                           bg=COLOR_BROWN, highlightthickness=0)
-#     self.body_scrollbar = tk.Scrollbar(self, orient='vertical')
-#     self.body_scrollbar.configure(command=self.body.yview)
-#     self.body.configure(yscrollcommand=self.body_scrollbar.set)
-#     self.body.bind("<MouseWheel>", self.__on_mouse_scroll)
-#     self.body.bind("<Button-4>", self.__on_mouse_scroll)
-#     self.body.bind("<Button-5>", self.__on_mouse_scroll)
-#     self.content: list[Word] = []
-
-#   def build(self):
-#     self.__del_rows()
-#     self.head.pack()
-#     self.body_scrollbar.pack(side=tk.RIGHT, fill='y')
-#     self.body.pack()
-
-#     self.head.create_text(
-#         30.0,
-#         25.0,
-#         anchor="nw",
-#         text="Word:",
-#         fill="#000000",
-#         font=FONT(24)
-#     )
-
-#     self.head.create_text(
-#         350.0,
-#         25.0,
-#         anchor="nw",
-#         text="Translation:",
-#         fill="#000000",
-#         font=FONT(24)
-#     )
-
-#     self.head.create_text(
-#         770.0,
-#         25.0,
-#         anchor="nw",
-#         text="Accuracy:",
-#         fill="#000000",
-#         font=FONT(24)
-#     )
-
-#     self.head.create_rectangle(
-#         30.0,
-#         57.0,
-#         870.0,
-#         58.0,
-#         fill="#000000",
-#         outline="")
-
-#     self.__add_rows()
-
-#   def update_content(self, new_content: list[Word]):
-#     self.content.clear()
-#     self.content.extend(new_content)
-
-#   def __add_rows(self):
-
-#     # Bullshit lines because otherways canvas somehow
-#     # places everything relative to first placed element now
-#     self.body.create_rectangle(0, 10, 0, 10,
-#                                fill=COLOR_BROWN,
-#                                outline=COLOR_BROWN)
-#     # Endbullshit lines
-
-#     for i, row in enumerate(self.content, start=1):
-#       self.body.create_text(35, 30 * i, anchor="w", text=row.word,
-#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
-#       self.body.create_text(355, 30 * i, anchor="w", text=row.word,
-#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
-#       self.body.create_text(803, 30 * i, anchor="w", text=f"{row.language.value}%",
-#                             fill=COLOR_BLACK, font=FONT(20, FONT_WEIGHT_REGULAR))
-
-#     self.body.configure(scrollregion=self.body.bbox("all"))
-
-#   def __del_rows(self):
-#     self.body.delete("all")
-#     self.body_scrollbar.pack_forget()
-#     self.body.configure(scrollregion=(0, 0, 0, 0))
-
-#   def __on_mouse_scroll(self, e: tk.Event):
-#     print(f"Scrolling with wheel {e}")
-#     if e.num == 4:
-#       self.body.yview_scroll(-1, 'units')
-#     if e.num == 5:
-#       self.body.yview_scroll(1, 'units')
 
 
 class ExerciseWidget(BaseWidget):

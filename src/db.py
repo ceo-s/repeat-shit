@@ -16,6 +16,8 @@ class Database:
 
     if path is not None:
       cls.__instance.__path = path
+      if not os.path.exists(path):
+        os.mkdir(path)
       cls.__instance.__init()
 
     return cls.__instance

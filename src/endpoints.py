@@ -195,11 +195,11 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
 
     cls.lang_picker.place(anchor="center", relx=.5, rely=.33)
-    cls.lang_picker.add_callback("<<LangChange>>", cls.__set_word_count_at_lang_change)
-    cls.lang_picker.add_callback("<<LangSwap>>", cls.__set_word_count_at_lang_change)
+    cls.lang_picker.bind("<<LangChange>>", lambda e: cls.__set_word_count_at_lang_change())
+    cls.lang_picker.bind("<<LangSwap>>", lambda e: cls.__set_word_count_at_lang_change())
     cls.lang_picker.build()
     cls.word_count_slider.place(anchor="center", relx=.5, rely=.58)
-    cls.__set_word_count_at_lang_change("")
+    cls.__set_word_count_at_lang_change()
     cls.word_count_slider.build()
 
     image_1 = cls.canvas.create_image(
@@ -241,7 +241,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     EndpointSolve.enter()
 
   @classmethod
-  def __set_word_count_at_lang_change(cls, _: str):
+  def __set_word_count_at_lang_change(cls):
     lang_from, lang_to = cls.lang_picker.get_lang_pair()
     count = 0
     for word in Database().vocabulary.get(lang_from):
@@ -462,8 +462,8 @@ class EndpointVocabulary(BaseEndpoint):
     )
 
     cls.lang_picker = LanguagePicker(cls.canvas)
-    cls.lang_picker.add_callback("<<LangChange>>", cls.__update_table)
-    cls.lang_picker.add_callback("<<LangSwap>>", cls.__update_table)
+    cls.lang_picker.bind("<<LangChange>>", lambda e: cls.__update_table())
+    cls.lang_picker.bind("<<LangSwap>>", lambda e: cls.__update_table())
     cls.table_container = tk.Frame(cls.canvas, height=460, width=900, background=COLOR_BLUE)
     cls.table_container.pack_propagate(False)
     cls.table = ttk.Treeview(cls.table_container,
@@ -537,10 +537,10 @@ class EndpointVocabulary(BaseEndpoint):
     cls.table_scrollbar.pack(side="right", fill=tk.Y)
     cls.table.pack(side="right", fill="both", expand=True)
 
-    cls.__update_table("")
+    cls.__update_table()
 
   @classmethod
-  def __update_table(cls, _: str):
+  def __update_table(cls):
     cls.table.delete(*cls.table.get_children())
     lang_from, lang_to = cls.lang_picker.get_lang_pair()
 
@@ -617,7 +617,7 @@ class EndpointVocabulary(BaseEndpoint):
           db.vocabulary.add_word(translation)
           translation = db.vocabulary.get_word(translation)
           db.vocabulary.add_translation(word, translation)
-        cls.__update_table("")
+        cls.__update_table()
 
   @classmethod
   def __handle_items_selection(cls, e: tk.Event):
