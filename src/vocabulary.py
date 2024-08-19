@@ -9,10 +9,121 @@ __all__ = ["Language", "Translation", "Word", "Vocabulary"]
 
 
 class Language(MultiEnum):
-  RUSSIAN = "russian", "ru"
-  ENGLISH = "english", "en"
-  ITALIAN = "italian", "it"
-  FRENCH = "french", "fr"
+  AFRIKAANS = 'af', 'afrikaans'
+  ALBANIAN = 'sq', 'albanian'
+  AMHARIC = 'am', 'amharic'
+  ARABIC = 'ar', 'arabic'
+  ARMENIAN = 'hy', 'armenian'
+  AZERBAIJANI = 'az', 'azerbaijani'
+  BASQUE = 'eu', 'basque'
+  BELARUSIAN = 'be', 'belarusian'
+  BENGALI = 'bn', 'bengali'
+  BOSNIAN = 'bs', 'bosnian'
+  BULGARIAN = 'bg', 'bulgarian'
+  CATALAN = 'ca', 'catalan'
+  CEBUANO = 'ceb', 'cebuano'
+  CHICHEWA = 'ny', 'chichewa'
+  CHINESE_SIMPLIFIED = 'zh-cn', 'chinese (simplified)'
+  CHINESE = 'zh-tw', 'chinese (traditional)'
+  CORSICAN = 'co', 'corsican'
+  CROATIAN = 'hr', 'croatian'
+  CZECH = 'cs', 'czech'
+  DANISH = 'da', 'danish'
+  DUTCH = 'nl', 'dutch'
+  ENGLISH = 'en', 'english'
+  ESPERANTO = 'eo', 'esperanto'
+  ESTONIAN = 'et', 'estonian'
+  FILIPINO = 'tl', 'filipino'
+  FINNISH = 'fi', 'finnish'
+  FRENCH = 'fr', 'french'
+  FRISIAN = 'fy', 'frisian'
+  GALICIAN = 'gl', 'galician'
+  GEORGIAN = 'ka', 'georgian'
+  GERMAN = 'de', 'german'
+  GREEK = 'el', 'greek'
+  GUJARATI = 'gu', 'gujarati'
+  HAITIAN = 'ht', 'haitian creole'
+  HAUSA = 'ha', 'hausa'
+  HAWAIIAN = 'haw', 'hawaiian'
+  HEBREW = 'iw', 'hebrew'
+  HEBREW_ = 'he', 'hebrew'
+  HINDI = 'hi', 'hindi'
+  HMONG = 'hmn', 'hmong'
+  HUNGARIAN = 'hu', 'hungarian'
+  ICELANDIC = 'is', 'icelandic'
+  IGBO = 'ig', 'igbo'
+  INDONESIAN = 'id', 'indonesian'
+  IRISH = 'ga', 'irish'
+  ITALIAN = 'it', 'italian'
+  JAPANESE = 'ja', 'japanese'
+  JAVANESE = 'jw', 'javanese'
+  KANNADA = 'kn', 'kannada'
+  KAZAKH = 'kk', 'kazakh'
+  KHMER = 'km', 'khmer'
+  KOREAN = 'ko', 'korean'
+  KURDISH = 'ku', 'kurdish (kurmanji)'
+  KYRGYZ = 'ky', 'kyrgyz'
+  LAO = 'lo', 'lao'
+  LATIN = 'la', 'latin'
+  LATVIAN = 'lv', 'latvian'
+  LITHUANIAN = 'lt', 'lithuanian'
+  LUXEMBOURGISH = 'lb', 'luxembourgish'
+  MACEDONIAN = 'mk', 'macedonian'
+  MALAGASY = 'mg', 'malagasy'
+  MALAY = 'ms', 'malay'
+  MALAYALAM = 'ml', 'malayalam'
+  MALTESE = 'mt', 'maltese'
+  MAORI = 'mi', 'maori'
+  MARATHI = 'mr', 'marathi'
+  MONGOLIAN = 'mn', 'mongolian'
+  MYANMAR_BURMESE = 'my', 'myanmar (burmese)'
+  NEPALI = 'ne', 'nepali'
+  NORWEGIAN = 'no', 'norwegian'
+  ODIA = 'or', 'odia'
+  PASHTO = 'ps', 'pashto'
+  PERSIAN = 'fa', 'persian'
+  POLISH = 'pl', 'polish'
+  PORTUGUESE = 'pt', 'portuguese'
+  PUNJABI = 'pa', 'punjabi'
+  ROMANIAN = 'ro', 'romanian'
+  RUSSIAN = 'ru', 'russian'
+  SAMOAN = 'sm', 'samoan'
+  SCOTS = 'gd', 'scots gaelic'
+  SERBIAN = 'sr', 'serbian'
+  SESOTHO = 'st', 'sesotho'
+  SHONA = 'sn', 'shona'
+  SINDHI = 'sd', 'sindhi'
+  SINHALA = 'si', 'sinhala'
+  SLOVAK = 'sk', 'slovak'
+  SLOVENIAN = 'sl', 'slovenian'
+  SOMALI = 'so', 'somali'
+  SPANISH = 'es', 'spanish'
+  SUNDANESE = 'su', 'sundanese'
+  SWAHILI = 'sw', 'swahili'
+  SWEDISH = 'sv', 'swedish'
+  TAJIK = 'tg', 'tajik'
+  TAMIL = 'ta', 'tamil'
+  TELUGU = 'te', 'telugu'
+  THAI = 'th', 'thai'
+  TURKISH = 'tr', 'turkish'
+  UKRAINIAN = 'uk', 'ukrainian'
+  URDU = 'ur', 'urdu'
+  UYGHUR = 'ug', 'uyghur'
+  UZBEK = 'uz', 'uzbek'
+  VIETNAMESE = 'vi', 'vietnamese'
+  WELSH = 'cy', 'welsh'
+  XHOSA = 'xh', 'xhosa'
+  YIDDISH = 'yi', 'yiddish'
+  YORUBA = 'yo', 'yoruba'
+  ZULU = 'zu', 'zulu'
+
+  @property
+  def short(self) -> str:
+    return self._all_values[0]
+
+  @property
+  def full(self) -> str:
+    return self._all_values[1]
 
 
 @dataclass
@@ -64,6 +175,9 @@ class Word:
     if isinstance(other, str):
       return self.word <= other
     return self.word <= other.word
+
+  def __hash__(self) -> int:
+    return hash(self.word + self.language.short)
 
 
 class Vocabulary:
@@ -147,5 +261,5 @@ class Vocabulary:
   def __str__(self) -> str:
     return f"Vocabulary{self.__data}"
 
-  def __in__(self, word: Word) -> bool:
+  def __contains__(self, word: Word) -> bool:
     return word in self.__data[word.language]
