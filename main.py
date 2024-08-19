@@ -18,6 +18,7 @@ def main() -> None:
     x=root.winfo_screenwidth(),
     y=root.winfo_screenheight()
   ))
+  root.resizable(False, False)
 
   init_styles(root)
   init_endpoints(root)
