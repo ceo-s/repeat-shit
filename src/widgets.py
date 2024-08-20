@@ -1,16 +1,19 @@
 from tkinter import ttk
 from tkinter.filedialog import askopenfilename
-from typing import Callable, ParamSpec, Literal, Any
 from abc import abstractmethod, ABC
 from os import PathLike
+from typing import Iterable
+from functools import partial
 
 import tkinter as tk
 import customtkinter as ctk
 
 from src.consts import *
 from src.gallery import Gallery
-from src.vocabulary import Vocabulary, Word, Translation, Language
+from src.vocabulary import Word, Language, Vocabulary
 from src.scrollable_dropdown import CTkScrollableDropdown
+from src.translator import Translator
+from src.misc import add_scroll_linux
 
 
 class BaseWidget(tk.Canvas, ABC):
@@ -54,53 +57,53 @@ class LanguagePicker(BaseWidget):
                                                 font=FONT(20, weight=FONT_WEIGHT_BOLD),
                                                 dropdown_font=FONT(20),
                                                 values=self.LANG_LIST,
-                                                fg_color=COLOR_PINK1,
+                                                fg_color=COLOR_PINK,
                                                 text_color=COLOR_YELLOW,
-                                                dropdown_text_color=COLOR_PINK1,
+                                                dropdown_text_color=COLOR_PINK,
                                                 dropdown_hover_color=COLOR_BROWN,
                                                 dropdown_fg_color=COLOR_YELLOW,
-                                                button_color=COLOR_PINK2,
-                                                button_hover_color=COLOR_PINK2,
+                                                button_color=COLOR_PINK_DARK,
+                                                button_hover_color=COLOR_PINK_DARK,
                                                 )
     CTkScrollableDropdown(self.__choose_lang_from,
                           id_="from",
                           values=self.LANG_LIST,
                           command=lambda s: self.__swap_if_both_same(s) or self.__on_lang_change(),
-                          button_color=COLOR_PINK1,
+                          button_color=COLOR_PINK,
                           text_color=COLOR_YELLOW,
-                          scrollbar_button_color=COLOR_PINK2,
+                          scrollbar_button_color=COLOR_PINK_DARK,
                           fg_color=COLOR_YELLOW,
                           frame_border_width=0,
                           frame_corner_radius=40,
-                          scrollbar_button_hover_color=COLOR_PINK2,
-                          hover_color=COLOR_PINK2,
+                          scrollbar_button_hover_color=COLOR_PINK_DARK,
+                          hover_color=COLOR_PINK_DARK,
                           )
 
     self.__choose_lang_to = ctk.CTkOptionMenu(self, 180, 50, 6,
                                               font=FONT(20, weight=FONT_WEIGHT_BOLD),
                                               dropdown_font=FONT(20),
                                               values=self.LANG_LIST,
-                                              fg_color=COLOR_PINK1,
+                                              fg_color=COLOR_PINK,
                                               text_color=COLOR_YELLOW,
-                                              dropdown_text_color=COLOR_PINK1,
+                                              dropdown_text_color=COLOR_PINK,
                                               dropdown_hover_color=COLOR_BROWN,
                                               dropdown_fg_color=COLOR_YELLOW,
-                                              button_color=COLOR_PINK2,
-                                              button_hover_color=COLOR_PINK2,
+                                              button_color=COLOR_PINK_DARK,
+                                              button_hover_color=COLOR_PINK_DARK,
                                               )
 
     CTkScrollableDropdown(self.__choose_lang_to,
                           id_="to",
                           values=self.LANG_LIST,
                           command=lambda s: self.__swap_if_both_same(s) or self.__on_lang_change(),
-                          button_color=COLOR_PINK1,
+                          button_color=COLOR_PINK,
                           text_color=COLOR_YELLOW,
-                          scrollbar_button_color=COLOR_PINK2,
+                          scrollbar_button_color=COLOR_PINK_DARK,
                           fg_color=COLOR_YELLOW,
                           frame_border_width=0,
                           frame_corner_radius=40,
-                          scrollbar_button_hover_color=COLOR_PINK2,
-                          hover_color=COLOR_PINK2,
+                          scrollbar_button_hover_color=COLOR_PINK_DARK,
+                          hover_color=COLOR_PINK_DARK,
                           )
     self.__choose_lang_to.set(self.LANG_LIST[1])
 
@@ -169,12 +172,12 @@ class WordCountSlider(BaseWidget):
 
     self.__slider = ctk.CTkSlider(self, from_=0, to=1,
                                   command=self.__update_label_value,
-                                  fg_color=COLOR_PINK3,
+                                  fg_color=COLOR_PINK_LIGHT,
                                   height=30,
                                   width=360,
                                   progress_color=COLOR_BLUE,
-                                  button_color=COLOR_PINK1,
-                                  button_hover_color=COLOR_PINK2,
+                                  button_color=COLOR_PINK,
+                                  button_hover_color=COLOR_PINK_DARK,
                                   )
 
     self.__label = ctk.CTkLabel(self,
@@ -300,6 +303,150 @@ class ExerciseWidget(BaseWidget):
     self.__entry.delete(0, ctk.END)
 
 
+class TranslatorWidget(BaseWidget):
+
+  def init(self):
+    self.configure(width=800, height=600, background=COLOR_YELLOW, highlightthickness=0)
+    self.event_add("<<TranslateComplete>>", "None")
+    self.bind("<Button-1>", lambda event: event.widget.focus_set())
+    self.__lang_picker = LanguagePicker(self)
+    self.__lang_picker.build()
+    self.__lang_picker.bind("<<LangSwap>>", lambda e: self.__translate())
+    self.__lang_picker.bind("<<LangChange>>", lambda e: self.__translate())
+
+    self.__entry_text = ""
+    self.__entry = ctk.CTkEntry(self,
+                                width=800,
+                                height=80,
+                                fg_color=COLOR_BROWN,
+                                text_color=COLOR_BLACK,
+                                placeholder_text="Enter word to translate",
+                                placeholder_text_color=COLOR_GRAY,
+                                corner_radius=2,
+                                border_width=0,
+                                )
+    self.__translations_container = ctk.CTkScrollableFrame(self,
+                                                           height=420,
+                                                           width=800,
+                                                           bg_color=COLOR_YELLOW,
+                                                           fg_color=COLOR_YELLOW,
+                                                           scrollbar_button_color=COLOR_BROWN,
+                                                           scrollbar_button_hover_color=COLOR_GRAY,
+                                                           )
+    add_scroll_linux(self.__translations_container)
+    self.__initialized = False
+
+  def initialize_translator(self, vocabulary: Vocabulary):
+    self.__initialized = True
+    self.__vocabulary = vocabulary
+
+  def build(self):
+    if not self.__initialized:
+      raise Exception("TranslatorWidget should be initialized before calling build!")
+
+    self.__lang_picker.pack()
+    self.__entry.pack(pady=(25, 5))
+    self.__translations_container.pack()
+    self.__entry.bind("<KeyRelease>", self.__handle_entry_change)
+
+  def clear(self):
+    self.__entry.delete(0, tk.END)
+    self.__entry_text = ""
+    self.__update_translations([])
+
+  def __handle_entry_change(self, e: tk.Event):
+    text = self.__entry.get().strip(" \n")
+    if text != self.__entry_text:
+      self.__entry_text = text
+      self.__update_translations([])
+      self.__translate()
+
+  def __translate(self):
+    if not self.__entry_text:
+      return
+    lang_from, lang_to = self.__lang_picker.get_lang_pair()
+    word = Word(self.__entry_text.lower().strip(), lang_from)
+    translations = []
+
+    try:
+      for t in self.__vocabulary.get_word(word).translations[lang_to]:
+        translations.append(t.translation)
+    except KeyError:
+      pass
+
+    translator_translations = Translator.translate(self.__entry_text, lang_from.short, lang_to.short)
+    for t in translator_translations[:10]:
+      t_word = Word(t, lang_to)
+      try:
+        t_word = self.__vocabulary.get_word(Word(t, lang_to))
+      except KeyError:
+        pass
+
+      if t_word not in translations:
+        translations.append(t_word)
+
+    self.__update_translations(translations)
+    self.event_generate("<<TranslateComplete>>")
+
+  def __update_translations(self, translations: Iterable[Word]):
+    for child in list(self.__translations_container.children.values()):
+      child.destroy()
+
+    for translation in translations:
+
+      checkbox = ctk.CTkCheckBox(self.__translations_container,
+                                 text=translation.word,
+                                 font=FONT(36),
+                                 text_color=COLOR_GRAY,
+                                 text_color_disabled=COLOR_GRAY,
+                                 variable=tk.IntVar(value=0),
+                                 onvalue=1,
+                                 offvalue=0,
+                                 checkbox_width=36,
+                                 checkbox_height=36,
+                                 corner_radius=4,
+                                 fg_color=COLOR_PINK,
+                                 border_color=COLOR_PINK,
+                                 hover_color=COLOR_PINK_LIGHT,
+                                 #  command=partial(self.__add_to_vocabulary, translation.word),
+                                 )
+      checkbox.bind("<1>", partial(self.__add_or_del_in_vocabulary, checkbox))
+
+      if translation in self.__vocabulary:
+        checkbox.select()
+
+      checkbox.pack(pady=4, anchor="nw")
+
+  def __add_or_del_in_vocabulary(self, checkbox: ctk.CTkCheckBox, e: tk.Event):
+    lang_from, lang_to = self.__lang_picker.get_lang_pair()
+    word = Word(self.__entry_text.lower().split(), lang_from)
+    translation = Word(checkbox._text, lang_to)
+
+    if checkbox.get() == 0:
+      try:
+        translation = self.__vocabulary.get_word(translation)
+        self.__vocabulary.delete_word(translation)
+      except KeyError:
+        pass
+
+    else:
+      try:
+        word = self.__vocabulary.get_word(word)
+      except KeyError:
+        pass
+
+      try:
+        translation = self.__vocabulary.get_word(translation)
+      except KeyError:
+        pass
+
+      self.__vocabulary.add_word(word)
+      word = self.__vocabulary.get_word(word)
+      self.__vocabulary.add_word(translation)
+      translation = self.__vocabulary.get_word(translation)
+      self.__vocabulary.add_translation(word, translation)
+
+
 class ImportFromFilePopUP(BasePopUp):
 
   def build(self):
@@ -334,7 +481,6 @@ class ImportFromFilePopUP(BasePopUp):
                           font=FONT(24, weight=FONT_WEIGHT_BOLD),
                           )
 
-    # button = ctk.CTkButton(self, text="Choose file", command=self.__update_file_path)
     button = ctk.CTkButton(self,
                            height=40,
                            width=240,
@@ -345,7 +491,7 @@ class ImportFromFilePopUP(BasePopUp):
                            corner_radius=4,
                            bg_color=COLOR_YELLOW,
                            fg_color=COLOR_BLUE,
-                           hover_color=COLOR_PINK1,
+                           hover_color=COLOR_PINK,
                            command=self.__update_file_path)
     label.pack(side=tk.TOP, pady=15)
     l_container.pack(side=tk.TOP, pady=15)
@@ -390,12 +536,12 @@ class AddNewWordPopUp(BasePopUp):
                                    corner_radius=4,
                                    bg_color=COLOR_YELLOW,
                                    fg_color=COLOR_BLUE,
-                                   hover_color=COLOR_PINK1,
+                                   hover_color=COLOR_PINK,
                                    command=self.__update_data)
 
     self.word_entry = ctk.CTkEntry(self,
                                    placeholder_text="word",
-                                   placeholder_text_color=COLOR_PINK3,
+                                   placeholder_text_color=COLOR_PINK_LIGHT,
                                    text_color=COLOR_GRAY,
                                    font=FONT(24, weight=FONT_WEIGHT_REGULAR),
                                    height=30,
@@ -444,7 +590,7 @@ class AddNewWordPopUp(BasePopUp):
   def __add_translation_entry(self):
     new_entry = ctk.CTkEntry(self.translation_entries_container,
                              placeholder_text=f"one of the translations",
-                             placeholder_text_color=COLOR_PINK3,
+                             placeholder_text_color=COLOR_PINK_LIGHT,
                              text_color=COLOR_GRAY,
                              font=FONT(24, weight=FONT_WEIGHT_REGULAR),
                              height=30,

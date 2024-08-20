@@ -6,21 +6,20 @@ from abc import ABC, abstractmethod
 
 import tkinter as tk
 import customtkinter as ctk
+import string
 
-from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget, ImportFromFilePopUP, AddNewWordPopUp
+from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget, TranslatorWidget
+from src.widgets import ImportFromFilePopUP, AddNewWordPopUp
 from src.gallery import Gallery
 from src.db import Database
-from src.vocabulary import Vocabulary, Word, Translation, Language
+from src.vocabulary import Word, Language
 
 
 def init_endpoints(root: ctk.CTk):
   BaseEndpoint.PARENT = root
   BaseEndpoint.SHARED_GALLERY = Gallery("assets/shared")
-  EndpointMainMenu.init()
-  EndpointConfigurateExercise.init()
-  EndpointSolve.init()
-  EndpointExerciseResult.init()
-  EndpointVocabulary.init()
+  for c in BaseEndpoint.__subclasses__():
+    c.init()
 
 
 def build_main_endpoint():
@@ -69,7 +68,7 @@ class EndpointMainMenu(BaseEndpoint):
         cls.canvas,
         image=cls.GALLERY["button_1.png"],
         background=COLOR_YELLOW,
-        activebackground=COLOR_PINK1,
+        activebackground=COLOR_PINK,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: cls.leave() or EndpointConfigurateExercise.enter(),
@@ -80,7 +79,7 @@ class EndpointMainMenu(BaseEndpoint):
         cls.canvas,
         image=cls.GALLERY["button_4.png"],
         background=COLOR_YELLOW,
-        activebackground=COLOR_PINK1,
+        activebackground=COLOR_PINK,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: print("button_read clicked"),
@@ -91,10 +90,10 @@ class EndpointMainMenu(BaseEndpoint):
         cls.canvas,
         image=cls.GALLERY["button_3.png"],
         background=COLOR_YELLOW,
-        activebackground=COLOR_PINK1,
+        activebackground=COLOR_PINK,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_translate clicked"),
+        command=lambda: cls.leave() or EndpointTranslator.enter(),
         relief="flat"
     )
 
@@ -102,7 +101,7 @@ class EndpointMainMenu(BaseEndpoint):
         cls.canvas,
         image=cls.GALLERY["button_2.png"],
         background=COLOR_YELLOW,
-        activebackground=COLOR_PINK1,
+        activebackground=COLOR_PINK,
         borderwidth=0,
         highlightthickness=0,
         command=lambda: cls.leave() or EndpointVocabulary.enter(),
@@ -154,7 +153,7 @@ class EndpointConfigurateExercise(BaseEndpoint):
     cls.add_new_word_variable = ctk.IntVar(value=0)
     cls.add_new_word_checkbox = ctk.CTkCheckBox(cls.canvas, 200, 60,
                                                 text="Add new random words",
-                                                text_color=COLOR_PINK1,
+                                                text_color=COLOR_PINK,
                                                 font=FONT(22, weight=FONT_WEIGHT_BOLD),
                                                 variable=cls.add_new_word_variable,
                                                 onvalue=1,
@@ -163,9 +162,9 @@ class EndpointConfigurateExercise(BaseEndpoint):
                                                 corner_radius=10,
                                                 border_width=3,
                                                 bg_color=COLOR_YELLOW,
-                                                fg_color=COLOR_PINK1,
-                                                hover_color=COLOR_PINK3,
-                                                border_color=COLOR_PINK1)
+                                                fg_color=COLOR_PINK,
+                                                hover_color=COLOR_PINK_LIGHT,
+                                                border_color=COLOR_PINK)
 
     cls.button_back = Button(cls.canvas,
                              image=cls.SHARED_GALLERY["button_back.png"],
@@ -326,7 +325,7 @@ class EndpointExerciseResult(BaseEndpoint):
                                       corner_radius=4,
                                       bg_color=COLOR_YELLOW,
                                       fg_color=COLOR_BLUE,
-                                      hover_color=COLOR_PINK1,
+                                      hover_color=COLOR_PINK,
                                       command=lambda: cls.leave() or EndpointMainMenu.enter())
 
     cls.table_container = tk.Frame(cls.canvas, height=460, width=900, background=COLOR_BLUE)
@@ -617,3 +616,55 @@ class EndpointVocabulary(BaseEndpoint):
       Database().vocabulary.delete_word(word)
 
     cls.table.delete(*item_ids)
+
+
+class EndpointTranslator(BaseEndpoint):
+
+  @classmethod
+  def init(cls):
+    cls.GALLERY = Gallery("assets/translate")
+    cls.canvas = Canvas(
+        cls.PARENT,
+        bg=COLOR_YELLOW,
+        height=800,
+        width=1000,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+
+    cls.button_back = Button(
+        cls.canvas,
+        image=cls.SHARED_GALLERY["button_back.png"],
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: cls.leave() or EndpointMainMenu.enter(),
+        relief="flat"
+    )
+
+    cls.button_back.place(
+      x=20,
+      y=60,
+      height=44,
+      width=44,
+    )
+
+    cls.translator = TranslatorWidget(cls.canvas)
+    cls.translator.initialize_translator(Database().vocabulary)
+    cls.translator.build()
+    cls.translator.pack(pady=(160, 0))
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    image_1 = cls.canvas.create_image(
+        500,
+        84,
+        image=cls.GALLERY["image_1.png"]
+    )
+
+  @classmethod
+  def leave(cls):
+    cls.translator.clear()
+    super().leave()
