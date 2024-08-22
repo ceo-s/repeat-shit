@@ -13,7 +13,7 @@ from src.gallery import Gallery
 from src.vocabulary import Word, Language, Vocabulary
 from src.scrollable_dropdown import CTkScrollableDropdown
 from src.translator import Translator
-from src.misc import add_scroll_linux
+from src.misc import add_scroll_linux, debounce
 
 
 class BaseWidget(tk.Canvas, ABC):
@@ -361,7 +361,9 @@ class TranslatorWidget(BaseWidget):
       self.__update_translations([])
       self.__translate()
 
+  @debounce(.5)
   def __translate(self):
+    print("Translating")
     if not self.__entry_text:
       return
     lang_from, lang_to = self.__lang_picker.get_lang_pair()
@@ -374,7 +376,7 @@ class TranslatorWidget(BaseWidget):
     except KeyError:
       pass
 
-    translator_translations = Translator.translate(self.__entry_text, lang_from.short, lang_to.short)
+    translator_translations = Translator.translate(self.__entry_text.lower().strip(), lang_from.short, lang_to.short)
     for t in translator_translations[:10]:
       t_word = Word(t, lang_to)
       try:
