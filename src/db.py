@@ -3,6 +3,7 @@ import os
 import pickle
 
 from src.vocabulary import Vocabulary
+from src.library import Library
 
 __all__ = ["Database"]
 
@@ -25,6 +26,15 @@ class Database:
   def __init__(self, path: str | PathLike | None = None) -> None:
     self.__path: str | PathLike
     self.__vocabulary: Vocabulary
+    self.__library: Library
+
+  @property
+  def vocabulary(self):
+    return self.__vocabulary
+
+  @property
+  def library(self):
+    return self.__library
 
   def __init(self):
     for p in dir(Database):
@@ -51,6 +61,22 @@ class Database:
     with open(vocabulary_data_path, "wb") as file:
       pickle.dump(self.__vocabulary, file)
 
-  @property
-  def vocabulary(self):
-    return self.__vocabulary
+  def __init_library(self):
+    library_data_path = f"{self.__path}/library.pickle"
+    library_storage_path = f"{self.__path}/library_storage"
+
+    if not os.path.exists(library_storage_path):
+      os.mkdir(library_storage_path)
+
+    if not os.path.exists(library_data_path):
+      with open(library_data_path, "wb") as file:
+        pickle.dump(Library(library_storage_path), file)
+
+    with open(library_data_path, "rb") as file:
+      self.__library = pickle.load(file)
+
+  def __save_library(self):
+    library_data_path = f"{self.__path}/library.pickle"
+
+    with open(library_data_path, "wb") as file:
+      pickle.dump(self.__library, file)

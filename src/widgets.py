@@ -363,7 +363,6 @@ class TranslatorWidget(BaseWidget):
 
   @debounce(.5)
   def __translate(self):
-    print("Translating")
     if not self.__entry_text:
       return
     lang_from, lang_to = self.__lang_picker.get_lang_pair()

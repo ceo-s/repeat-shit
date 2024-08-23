@@ -1,18 +1,22 @@
 from src.consts import *
 from src.gallery import Gallery
 from tkinter import ttk, Canvas, Button, Entry
+from tkinter.filedialog import askopenfilename
 from typing import Literal
 from abc import ABC, abstractmethod
+from PIL import Image, ImageTk
+from functools import partial
 
 import tkinter as tk
 import customtkinter as ctk
-import string
 
 from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget, TranslatorWidget
 from src.widgets import ImportFromFilePopUP, AddNewWordPopUp
 from src.gallery import Gallery
 from src.db import Database
 from src.vocabulary import Word, Language
+from src.library import Book
+from src.misc import add_scroll_linux
 
 
 def init_endpoints(root: ctk.CTk):
@@ -82,7 +86,7 @@ class EndpointMainMenu(BaseEndpoint):
         activebackground=COLOR_PINK,
         borderwidth=0,
         highlightthickness=0,
-        command=lambda: print("button_read clicked"),
+        command=lambda: cls.leave() or EndpointLibrary.enter(),
         relief="flat"
     )
 
@@ -659,7 +663,7 @@ class EndpointTranslator(BaseEndpoint):
     cls.canvas.place(anchor='center', relx=.5, rely=.5)
 
     image_1 = cls.canvas.create_image(
-        500,
+        400,
         84,
         image=cls.GALLERY["image_1.png"]
     )
@@ -668,3 +672,206 @@ class EndpointTranslator(BaseEndpoint):
   def leave(cls):
     cls.translator.clear()
     super().leave()
+
+
+class EndpointLibrary(BaseEndpoint):
+
+  @classmethod
+  def init(cls):
+    cls.GALLERY = Gallery("assets/library")
+    cls.canvas = Canvas(
+        cls.PARENT,
+        bg=COLOR_YELLOW,
+        height=800,
+        width=1000,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+    cls.canvas.pack_propagate(False)
+
+    cls.button_back = Button(
+        cls.canvas,
+        image=cls.SHARED_GALLERY["button_back.png"],
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: cls.leave() or EndpointMainMenu.enter(),
+        relief="flat"
+    )
+
+    cls.button_back.place(
+      x=20,
+      y=60,
+      height=44,
+      width=44,
+    )
+
+    cls.button_add_book = ctk.CTkButton(cls.canvas,
+                                        width=200,
+                                        height=60,
+                                        corner_radius=12,
+                                        text="Add book",
+                                        font=FONT(24, weight=FONT_WEIGHT_BOLD),
+                                        hover_color=COLOR_BROWN,
+                                        text_color=COLOR_PINK,
+                                        fg_color=COLOR_YELLOW,
+                                        border_color=COLOR_PINK,
+                                        border_width=3,
+                                        command=cls.__import_book,
+                                        )
+    cls.button_add_book.pack(side=tk.TOP, pady=(120, 0))
+    cls.books_container = ctk.CTkScrollableFrame(cls.canvas,
+                                                 width=800,
+                                                 height=560,
+                                                 fg_color=COLOR_BLUE,
+                                                 )
+    add_scroll_linux(cls.books_container)
+    cls.books_container.columnconfigure((0, 1, 2, 3), weight=1)
+    cls.books_container.pack(side=tk.TOP, pady=(20, 0))
+    # cls.books: list[tuple[ctk.CTkFrame, Book]] = []
+    cls.nbooks = 0
+    cls.__render_books()
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    image_1 = cls.canvas.create_image(
+        500,
+        84,
+        image=cls.GALLERY["image_1.png"]
+    )
+
+  @classmethod
+  def __render_books(cls):
+    for book in Database().library.books:
+      cls.__place_book(book)
+
+  @classmethod
+  def __place_book(cls, book: Book):
+    ri, ci = cls.nbooks // 4, cls.nbooks % 4
+    cls.nbooks += 1
+    book_frame = ctk.CTkFrame(cls.books_container,
+                              height=282,
+                              width=174,
+                              bg_color=COLOR_YELLOW,
+                              fg_color=COLOR_YELLOW,
+                              border_width=4,
+                              border_color=COLOR_PINK_DARK,
+                              )
+    book_frame.pack_propagate(False)
+    title = book.title if len(book.title) <= 15 else book.title[:15] + "..."
+    book_title_label = ctk.CTkLabel(book_frame,
+                                    text=title,
+                                    text_color=COLOR_GRAY,
+                                    bg_color=COLOR_YELLOW,
+                                    font=FONT(20),
+                                    )
+    book_title_label.pack(side=tk.BOTTOM, pady=(0, 4))
+
+    onclick_callback = partial(cls.__open_book, book)
+
+    if book.cover is not None:
+      cover = book.cover
+      cover = cover.resize((174, 250))
+      book_cover_image = ImageTk.PhotoImage(cover)
+      book_cover_label = ctk.CTkLabel(book_frame,
+                                      text="",
+                                      image=book_cover_image,
+                                      bg_color=COLOR_YELLOW,
+                                      )
+      book_cover_label.pack(side=tk.BOTTOM, expand="yes")
+      book_cover_label.bind("<1>", onclick_callback)
+
+    book_frame.grid(row=ri, column=ci, pady=10)
+    book_frame.bind("<1>", onclick_callback)
+    book_title_label.bind("<1>", onclick_callback)
+
+  @classmethod
+  def __open_book(cls, book: Book, e: tk.Event):
+    print("In event")
+    print(book)
+    cls.leave()
+    EndpointReader.initialize_reader(book)
+    EndpointReader.enter()
+
+  @classmethod
+  def __import_book(cls):
+    path = askopenfilename()
+    Database().library.import_book(path)
+
+
+class EndpointReader(BaseEndpoint):
+
+  @classmethod
+  def init(cls):
+    cls.GALLERY = Gallery("assets/reader")
+    cls.canvas = Canvas(
+        cls.PARENT,
+        bg=COLOR_YELLOW,
+        height=800,
+        width=1000,
+        bd=0,
+        highlightthickness=0,
+        relief="ridge"
+    )
+    cls.canvas.pack_propagate(False)
+
+    text = ""
+
+    cls.page = tk.Text(cls.canvas,
+                       width=100,
+                       height=42,
+                       borderwidth=0,
+                       selectborderwidth=0,
+                       bd=0,
+                       highlightthickness=0,
+                       bg=COLOR_PINK_LIGHT,
+                       foreground=COLOR_GRAY,
+                       wrap=tk.WORD,
+                       )
+    cls.page.insert(1.0, text)
+    cls.page.configure(state=tk.DISABLED)
+    cls.page.tag_add("all", 1.0, tk.END)
+    cls.page.tag_configure("all", justify="center")
+    cls.page.pack(pady=(120, 0))
+
+    cls.button_back = Button(
+        cls.canvas,
+        image=cls.SHARED_GALLERY["button_back.png"],
+        borderwidth=0,
+        highlightthickness=0,
+        command=lambda: cls.leave() or EndpointLibrary.enter(),
+        relief="flat"
+    )
+
+    cls.button_back.place(
+      x=20,
+      y=60,
+      height=44,
+      width=44,
+    )
+
+    cls.book: Book
+
+  @classmethod
+  def enter(cls):
+    cls.canvas.place(anchor='center', relx=.5, rely=.5)
+
+    image_1 = cls.canvas.create_image(
+        500,
+        84,
+        image=cls.GALLERY["image_1.png"]
+    )
+    cls.__render_page()
+
+  @classmethod
+  def initialize_reader(cls, book: Book):
+    cls.book = book
+
+  @classmethod
+  def __render_page(cls):
+    cls.page.configure(state="normal")
+    cls.page.delete(1.0, tk.END)
+    cls.page.insert(tk.END, cls.book.get_curr_page())
+    cls.page.configure(state="disabled")
