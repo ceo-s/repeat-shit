@@ -448,6 +448,117 @@ class TranslatorWidget(BaseWidget):
       self.__vocabulary.add_translation(word, translation)
 
 
+class ReaderConfigurationWidget(BaseWidget):
+  def init(self):
+    self.configure(width=200, height=220, background=COLOR_YELLOW, highlightthickness=0)
+    self.event_add("<<ConfigurationChange>>", "None")
+    self.event_add("<<BookDeleted>>", "None")
+    self.gallery = Gallery("assets/reader")
+    self.__initialized = False
+    self.conf_lang_to = Language.ENGLISH
+    self.conf_font_size = 18
+
+    self.__delete_book_label = ctk.CTkLabel(self,
+                                            text="Delete book:",
+                                            font=FONT(20),
+                                            text_color=COLOR_GRAY,
+                                            )
+    self.__delete_book_button = ctk.CTkButton(self,
+                                              width=180,
+                                              height=30,
+                                              corner_radius=10,
+                                              text="DELETE",
+                                              text_color=COLOR_PINK,
+                                              fg_color=COLOR_YELLOW,
+                                              bg_color=COLOR_YELLOW,
+                                              hover_color=COLOR_BROWN,
+                                              border_color=COLOR_PINK,
+                                              border_width=3,
+                                              command=lambda: self.event_generate("<<BookDeleted>>"),
+                                              )
+    self.__font_size_picker_label = ctk.CTkLabel(self,
+                                                 text="Choose font size:",
+                                                 font=FONT(20),
+                                                 text_color=COLOR_GRAY,
+                                                 )
+    self.__font_size_picker_var = tk.StringVar(self, str(self.conf_font_size))
+    self.__font_size_picker_var.trace_add("write", self.__on_fontsize_update)
+    self.__font_size_picker = ctk.CTkEntry(self,
+                                           width=180,
+                                           height=40,
+                                           font=FONT(24),
+                                           corner_radius=4,
+                                           text_color=COLOR_BLACK,
+                                           fg_color=COLOR_YELLOW,
+                                           border_color=COLOR_PINK,
+                                           textvariable=self.__font_size_picker_var,
+                                           )
+
+    self.__lang_picker_label = ctk.CTkLabel(self,
+                                            text="Translate to:",
+                                            font=FONT(20),
+                                            text_color=COLOR_GRAY,
+                                            )
+
+    self.__lang_picker = ctk.CTkOptionMenu(self, 180, 50, 6,
+                                           font=FONT(20, weight=FONT_WEIGHT_BOLD),
+                                           dropdown_font=FONT(20),
+                                           values=["Russian", "English"],
+                                           fg_color=COLOR_PINK,
+                                           text_color=COLOR_YELLOW,
+                                           dropdown_text_color=COLOR_PINK,
+                                           dropdown_hover_color=COLOR_BROWN,
+                                           dropdown_fg_color=COLOR_YELLOW,
+                                           button_color=COLOR_PINK_DARK,
+                                           button_hover_color=COLOR_PINK_DARK,
+                                           )
+
+    CTkScrollableDropdown(self.__lang_picker,
+                          id_="to",
+                          values=["Russian", "English"],
+                          command=lambda s: self.__on_lang_change(),
+                          button_color=COLOR_PINK,
+                          text_color=COLOR_YELLOW,
+                          scrollbar_button_color=COLOR_PINK_DARK,
+                          fg_color=COLOR_YELLOW,
+                          frame_border_width=0,
+                          frame_corner_radius=40,
+                          scrollbar_button_hover_color=COLOR_PINK_DARK,
+                          hover_color=COLOR_PINK_DARK,
+                          )
+
+  def build(self):
+    if not self.__initialized:
+      raise Exception("ReaderConfigurationWidget should be initialized before calling build")
+    self.__delete_book_label.pack(pady=(4, 0))
+    self.__delete_book_button.pack()
+    self.__font_size_picker_label.pack()
+    self.__font_size_picker.pack()
+    self.__lang_picker_label.pack()
+    self.__lang_picker.pack()
+
+  def initialize_configuration(self, font_size: int, lang_to: Language):
+    self.__initialized = True
+    self.conf_font_size = font_size
+    self.conf_lang_to = lang_to
+    self.__font_size_picker_var.set(f"{font_size}")
+    self.__lang_picker.set(lang_to.full.capitalize())
+
+  def __on_fontsize_update(self, *args):
+    new_val = self.__font_size_picker_var.get()
+    try:
+      new_val = int(new_val)
+    except ValueError:
+      return
+    self.conf_font_size = new_val
+
+    self.event_generate("<<ConfigurationChange>>")
+
+  def __on_lang_change(self):
+    self.conf_lang_to = Language(self.__lang_picker.get().lower().strip())
+    self.event_generate("<<ConfigurationChange>>")
+
+
 class ImportFromFilePopUP(BasePopUp):
 
   def build(self):

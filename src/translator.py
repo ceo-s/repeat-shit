@@ -1,4 +1,5 @@
 from abc import abstractmethod, ABC
+from typing import Literal
 
 import requests
 import bs4
@@ -75,5 +76,12 @@ class Translator(BaseTranslator):
           translations.append(item.text.strip().lower())
 
   @classmethod
-  def translate_with_google(cls, word: str, lang_from: str, lang_to: str) -> str:
+  def translate_with_google(cls, word: str, lang_from: str | None, lang_to: str) -> str:
+    if lang_from is None:
+      lang_from = "auto"
     return cls.GOOGLE_TRANSLATOR.translate(word, lang_to, lang_from).text
+
+  @classmethod
+  def detect_language(cls, word: str) -> tuple[str, float]:
+    d = cls.GOOGLE_TRANSLATOR.detect(word)
+    return d.lang, d.confidence

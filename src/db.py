@@ -4,6 +4,7 @@ import pickle
 
 from src.vocabulary import Vocabulary
 from src.library import Library
+from src.user_configuration import UserConfiguration
 
 __all__ = ["Database"]
 
@@ -27,6 +28,7 @@ class Database:
     self.__path: str | PathLike
     self.__vocabulary: Vocabulary
     self.__library: Library
+    self.__user_configuration: UserConfiguration
 
   @property
   def vocabulary(self):
@@ -35,6 +37,10 @@ class Database:
   @property
   def library(self):
     return self.__library
+
+  @property
+  def user_configuration(self):
+    return self.__user_configuration
 
   def __init(self):
     for p in dir(Database):
@@ -80,3 +86,19 @@ class Database:
 
     with open(library_data_path, "wb") as file:
       pickle.dump(self.__library, file)
+
+  def __init_user_configuration(self):
+    conf_data_path = f"{self.__path}/user_configuration.pickle"
+
+    if not os.path.exists(conf_data_path):
+      with open(conf_data_path, "wb") as file:
+        pickle.dump(UserConfiguration(), file)
+
+    with open(conf_data_path, "rb") as file:
+      self.__user_configuration = pickle.load(file)
+
+  def __save_user_configuration(self):
+    conf_data_path = f"{self.__path}/user_configuration.pickle"
+
+    with open(conf_data_path, "wb") as file:
+      pickle.dump(self.__user_configuration, file)

@@ -2,6 +2,7 @@ from os import PathLike
 from uuid import uuid4
 from datetime import datetime
 from PIL import Image
+from typing import Literal
 
 import os
 import shutil
@@ -39,21 +40,21 @@ class Book:
   def current_page(self):
     return self.__current_page_i + 1
 
+  @current_page.setter
+  def current_page(self, val: int):
+    val -= 1
+    if val < 0:
+      val = 0
+    elif val >= len(self.__pages):
+      val = len(self.__pages) - 1
+
+    self.__current_page_i = val
+
   @property
   def max_pages(self):
     return len(self.__pages)
 
-  def get_prev_page(self) -> str:
-    if self.__current_page_i > 0:
-      self.__current_page_i -= 1
-    return self.get_page(self.__current_page_i)
-
   def get_curr_page(self) -> str:
-    return self.get_page(self.__current_page_i)
-
-  def get_next_page(self) -> str:
-    if self.__current_page_i < self.max_pages - 1:
-      self.__current_page_i += 1
     return self.get_page(self.__current_page_i)
 
   def get_page(self, i) -> str:

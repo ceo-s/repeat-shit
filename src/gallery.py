@@ -23,5 +23,5 @@ class Gallery:
       img = Image.open(os.path.join(path, image_path))
       self.data[image_path] = ImageTk.PhotoImage(img)
 
-  def __getitem__(self, __key: str):
+  def __getitem__(self, __key: str) -> ImageTk.PhotoImage:
     return self.data[__key]

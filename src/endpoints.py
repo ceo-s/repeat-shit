@@ -10,13 +10,15 @@ from functools import partial
 import tkinter as tk
 import customtkinter as ctk
 
-from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget, TranslatorWidget
+from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget
+from src.widgets import TranslatorWidget, ReaderConfigurationWidget
 from src.widgets import ImportFromFilePopUP, AddNewWordPopUp
 from src.gallery import Gallery
 from src.db import Database
 from src.vocabulary import Word, Language
 from src.library import Book
-from src.misc import add_scroll_linux
+from src.misc import add_scroll_linux, debounce
+from src.translator import Translator
 
 
 def init_endpoints(root: ctk.CTk):
@@ -724,13 +726,14 @@ class EndpointLibrary(BaseEndpoint):
                                                  width=800,
                                                  height=560,
                                                  fg_color=COLOR_BLUE,
+                                                 scrollbar_button_color=COLOR_BROWN,
+                                                 scrollbar_button_hover_color=COLOR_GRAY,
                                                  )
+
     add_scroll_linux(cls.books_container)
     cls.books_container.columnconfigure((0, 1, 2, 3), weight=1)
     cls.books_container.pack(side=tk.TOP, pady=(20, 0))
-    # cls.books: list[tuple[ctk.CTkFrame, Book]] = []
     cls.nbooks = 0
-    cls.__render_books()
 
   @classmethod
   def enter(cls):
@@ -741,9 +744,14 @@ class EndpointLibrary(BaseEndpoint):
         84,
         image=cls.GALLERY["image_1.png"]
     )
+    cls.__render_books()
 
   @classmethod
   def __render_books(cls):
+    for child in list(cls.books_container.children.values()):
+      child.destroy()
+
+    cls.nbooks = 0
     for book in Database().library.books:
       cls.__place_book(book)
 
@@ -789,8 +797,6 @@ class EndpointLibrary(BaseEndpoint):
 
   @classmethod
   def __open_book(cls, book: Book, e: tk.Event):
-    print("In event")
-    print(book)
     cls.leave()
     EndpointReader.initialize_reader(book)
     EndpointReader.enter()
@@ -799,6 +805,7 @@ class EndpointLibrary(BaseEndpoint):
   def __import_book(cls):
     path = askopenfilename()
     Database().library.import_book(path)
+    cls.__render_books()
 
 
 class EndpointReader(BaseEndpoint):
@@ -808,7 +815,7 @@ class EndpointReader(BaseEndpoint):
     cls.GALLERY = Gallery("assets/reader")
     cls.canvas = Canvas(
         cls.PARENT,
-        bg=COLOR_YELLOW,
+        bg=COLOR_BLUE,
         height=800,
         width=1000,
         bd=0,
@@ -818,8 +825,13 @@ class EndpointReader(BaseEndpoint):
     cls.canvas.pack_propagate(False)
 
     text = ""
-
-    cls.page = tk.Text(cls.canvas,
+    cls.page_container = tk.Frame(cls.canvas,
+                                  width=850,
+                                  height=640,
+                                  )
+    cls.page_container.pack_propagate(False)
+    cls.page_container.pack(pady=(120, 0))
+    cls.page = tk.Text(cls.page_container,
                        width=100,
                        height=42,
                        borderwidth=0,
@@ -829,12 +841,14 @@ class EndpointReader(BaseEndpoint):
                        bg=COLOR_PINK_LIGHT,
                        foreground=COLOR_GRAY,
                        wrap=tk.WORD,
+                       font=FONT(Database().user_configuration.reader_font_size),
                        )
     cls.page.insert(1.0, text)
     cls.page.configure(state=tk.DISABLED)
     cls.page.tag_add("all", 1.0, tk.END)
     cls.page.tag_configure("all", justify="center")
-    cls.page.pack(pady=(120, 0))
+    cls.page.bind("<<Selection>>", cls.__translate_selected)
+    cls.page.pack(fill="both", expand=True)
 
     cls.button_back = Button(
         cls.canvas,
@@ -845,14 +859,100 @@ class EndpointReader(BaseEndpoint):
         relief="flat"
     )
 
-    cls.button_back.place(
-      x=20,
-      y=60,
-      height=44,
-      width=44,
+    cls.button_back.place(anchor="center", relx=.05, rely=.1)
+
+    arrow_img = Image.open("assets/shared/arrow.png")
+    arrow_to_left_img = arrow_img.rotate(270.)
+    arrow_to_right_img = arrow_img.rotate(90.)
+    cls.arrow_to_left = ImageTk.PhotoImage(arrow_to_left_img)
+    cls.arrow_to_right = ImageTk.PhotoImage(arrow_to_right_img)
+
+    cls.button_prev_page = Button(
+        cls.canvas,
+        image=cls.arrow_to_left,
+        borderwidth=0,
+        highlightthickness=0,
+        command=cls.__render_prev_page,
+        relief="flat",
+        background=COLOR_YELLOW,
+        activebackground=COLOR_YELLOW,
     )
 
+    cls.button_next_page = Button(
+        cls.canvas,
+        image=cls.arrow_to_right,
+        borderwidth=0,
+        highlightthickness=0,
+        command=cls.__render_next_page,
+        relief="flat",
+        background=COLOR_YELLOW,
+        activebackground=COLOR_YELLOW,
+    )
+
+    cls.button_prev_page.place(anchor="center", relx=.05, rely=.5)
+    cls.button_next_page.place(anchor="center", relx=.95, rely=.5)
+
+    cls.translation_frame = ctk.CTkFrame(cls.canvas,
+                                         fg_color=COLOR_BROWN,
+                                         bg_color=COLOR_BROWN,
+                                         width=300,
+                                         )
+    cls.translation_frame.pack_propagate(False)
+    cls.translation_checkbox = ctk.CTkCheckBox(cls.translation_frame,
+                                               text="",
+                                               text_color=COLOR_BLACK,
+                                               font=FONT(24),
+                                               border_color=COLOR_PINK,
+                                               hover_color=COLOR_PINK_LIGHT,
+                                               fg_color=COLOR_PINK,
+                                               text_color_disabled=COLOR_GRAY,
+                                               command=cls.__on_translation_toggle,
+                                               onvalue=1,
+                                               offvalue=0,
+                                               )
+    cls.translation_checkbox.pack(pady=6)
+    cls.translation_text = tk.Text(cls.translation_frame,
+                                   width=40,
+                                   height=10,
+                                   borderwidth=0,
+                                   selectborderwidth=0,
+                                   bd=0,
+                                   highlightthickness=0,
+                                   bg=COLOR_BROWN,
+                                   foreground=COLOR_GRAY,
+                                   wrap=tk.WORD,
+                                   font=FONT(16),
+                                   )
+    cls.translation_text.pack()
+
+    cls.open_configuration_button = Button(
+      cls.canvas,
+        borderwidth=0,
+        highlightthickness=0,
+        image=cls.GALLERY["button_1.png"],
+        relief="flat",
+        background=COLOR_YELLOW,
+        activebackground=COLOR_YELLOW,
+        command=lambda: cls.configuration_widget.place(anchor="ne", relx=.98, rely=.05),
+    )
+    cls.open_configuration_button.place(anchor="center", relx=.95, rely=.1)
+
+    cls.configuration_widget = ReaderConfigurationWidget(cls.canvas)
+    cls.configuration_widget.initialize_configuration(
+      Database().user_configuration.reader_font_size,
+      Database().user_configuration.reader_lang_to,
+        )
+    cls.configuration_widget.build()
+    cls.configuration_widget.bind("<<ConfigurationChange>>", cls.__on_conf_change)
+    cls.configuration_widget.bind("<<BookDeleted>>", lambda e: cls.__delete_book())
+
+    cls.canvas.bind("<1>", cls.__close_conf_if_clicked_outside)
+    cls.button_back.bind("<1>", cls.__close_conf_if_clicked_outside)
+    cls.page.bind("<1>", cls.__close_conf_if_clicked_outside)
+    cls.button_prev_page.bind("<1>", cls.__close_conf_if_clicked_outside)
+    cls.button_next_page.bind("<1>", cls.__close_conf_if_clicked_outside)
     cls.book: Book
+    cls.page_text: str
 
   @classmethod
   def enter(cls):
@@ -870,8 +970,108 @@ class EndpointReader(BaseEndpoint):
     cls.book = book
 
   @classmethod
+  def __render_prev_page(cls):
+    cls.book.current_page -= 1
+    cls.__render_page()
+
+  @classmethod
+  def __render_next_page(cls):
+    cls.book.current_page += 1
+    cls.__render_page()
+
+  @classmethod
   def __render_page(cls):
     cls.page.configure(state="normal")
     cls.page.delete(1.0, tk.END)
     cls.page.insert(tk.END, cls.book.get_curr_page())
     cls.page.configure(state="disabled")
+
+  @classmethod
+  def __translate_selected(cls, e: tk.Event):
+    if not cls.page.tag_ranges(tk.SEL):
+      cls.translation_frame.place_forget()
+      return
+    cls.__perform_translation()
+
+  @classmethod
+  @debounce(1)
+  def __perform_translation(cls):
+    selection = cls.page.get(tk.SEL_FIRST, tk.SEL_LAST)
+    translation = Translator.translate_with_google(selection.lower().strip(),
+                                                   None,
+                                                   cls.configuration_widget.conf_lang_to.short)
+    cls.__display_translation(translation.strip().lower())
+
+  @classmethod
+  def __display_translation(cls, translation: str):
+    translation_word = Word(translation, cls.configuration_widget.conf_lang_to)
+    try:
+      translation_word = Database().vocabulary.get_word(translation_word)
+      cls.translation_checkbox.select()
+      cls.translation_checkbox.configure(True, state=tk.DISABLED, text="Already in vocabulary")
+    except KeyError:
+      cls.translation_checkbox.deselect()
+      cls.translation_checkbox.configure(True, state=tk.NORMAL, text="Add to vocabulary")
+    cls.translation_text.configure(state="normal")
+    cls.translation_text.delete(1.0, tk.END)
+    cls.translation_text.insert(tk.END, translation)
+    cls.translation_text.configure(state="disabled")
+    cls.translation_frame.place(anchor="center", relx=.5, rely=.5)
+
+  @classmethod
+  def __on_translation_toggle(cls):
+    func = cls.__on_translation_add if cls.translation_checkbox.get() else cls.__on_translation_del
+    selection = cls.page.get(tk.SEL_FIRST, tk.SEL_LAST).lower().strip()
+    lang_short, confidence = Translator.detect_language(selection)
+    lang_from = Language(lang_short)
+    lang_to = cls.configuration_widget.conf_lang_to
+    translation_text = cls.translation_text.get(1.0, tk.END).lower().strip()
+    word = Word(selection, lang_from)
+    translation = Word(translation_text, lang_to)
+
+    func(word, translation)
+
+  @classmethod
+  def __on_translation_add(cls, word: Word, translation: Word):
+    db = Database()
+    db.vocabulary.add_word(word)
+
+    try:
+      translation = db.vocabulary.get_word(translation)
+    except KeyError:
+      db.vocabulary.add_word(translation)
+
+    word = db.vocabulary.get_word(word)
+    translation = db.vocabulary.get_word(translation)
+
+    db.vocabulary.add_translation(word, translation)
+    cls.translation_checkbox.configure(True, text="Delete from vocabulary")
+
+  @classmethod
+  def __on_translation_del(cls, word: Word, translation: Word):
+    db = Database()
+    try:
+      word = db.vocabulary.get_word(word)
+      translation = db.vocabulary.get_word(translation)
+    except KeyError:
+      print("That should not happen, but still...")
+      return
+
+    db.vocabulary.delete_word(translation)
+    cls.translation_checkbox.configure(True, text="Add to vocabulary")
+
+  @classmethod
+  def __on_conf_change(cls, e: tk.Event):
+    cls.page.configure(font=FONT(cls.configuration_widget.conf_font_size))
+    Database().user_configuration.reader_font_size = cls.configuration_widget.conf_font_size
+    Database().user_configuration.reader_lang_to = cls.configuration_widget.conf_lang_to
+
+  @classmethod
+  def __close_conf_if_clicked_outside(cls, e: tk.Event):
+    cls.configuration_widget.place_forget()
+
+  @classmethod
+  def __delete_book(cls):
+    Database().library.delete_book(cls.book)
+    cls.leave()
+    EndpointLibrary.enter()
