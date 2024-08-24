@@ -1,0 +1,11 @@
+name: ReleaseApp
+on:
+  push:
+    branches: [master]
+jobs:
+  build_linux:
+    runs-on: ubuntu-latest
+    name: Build for linux
+    steps:
+      - name: build project
+        run: build_linux.sh
