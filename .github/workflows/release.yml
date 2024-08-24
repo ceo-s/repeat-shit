@@ -23,9 +23,6 @@ jobs:
       - name: add execution permissions to script
         run: chmod +x build_linux.sh
 
-      - name: listdir
-        run: ls
-
       - name: build project
         run: ./build_linux.sh
 
