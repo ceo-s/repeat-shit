@@ -126,6 +126,10 @@ class Language(MultiEnum):
     return self._all_values[1]
 
 
+LANGUAGES_FULL = [lang.full.capitalize() for lang in Language]
+LANGUAGES_SHORT = [lang.short.capitalize() for lang in Language]
+
+
 @dataclass
 class Translation:
   translation: "Word"

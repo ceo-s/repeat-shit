@@ -41,10 +41,12 @@ class Translator(BaseTranslator):
     translations = []
 
     resp = requests.get(f"https://glosbe.com/{lang_from}/{lang_to}/{word}", timeout=5)
-    soup = bs4.BeautifulSoup(resp.text, features="html.parser")
 
-    cls.__extract_main(soup, translations)
-    cls.__extract_adds(soup, translations)
+    if resp.status_code == 200:
+      soup = bs4.BeautifulSoup(resp.text, features="html.parser")
+
+      cls.__extract_main(soup, translations)
+      cls.__extract_adds(soup, translations)
 
     if len(translations) == 0:
       translations.append(cls.translate_with_google(word, lang_from, lang_to))

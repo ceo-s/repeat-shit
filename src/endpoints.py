@@ -725,7 +725,7 @@ class EndpointLibrary(BaseEndpoint):
     cls.books_container = ctk.CTkScrollableFrame(cls.canvas,
                                                  width=800,
                                                  height=560,
-                                                 fg_color=COLOR_BLUE,
+                                                 fg_color=COLOR_YELLOW,
                                                  scrollbar_button_color=COLOR_BROWN,
                                                  scrollbar_button_hover_color=COLOR_GRAY,
                                                  )
@@ -815,7 +815,7 @@ class EndpointReader(BaseEndpoint):
     cls.GALLERY = Gallery("assets/reader")
     cls.canvas = Canvas(
         cls.PARENT,
-        bg=COLOR_BLUE,
+        bg=COLOR_YELLOW,
         height=800,
         width=1000,
         bd=0,
@@ -838,7 +838,7 @@ class EndpointReader(BaseEndpoint):
                        selectborderwidth=0,
                        bd=0,
                        highlightthickness=0,
-                       bg=COLOR_PINK_LIGHT,
+                       bg=COLOR_YELLOW,
                        foreground=COLOR_GRAY,
                        wrap=tk.WORD,
                        font=FONT(Database().user_configuration.reader_font_size),
@@ -856,7 +856,9 @@ class EndpointReader(BaseEndpoint):
         borderwidth=0,
         highlightthickness=0,
         command=lambda: cls.leave() or EndpointLibrary.enter(),
-        relief="flat"
+        relief="flat",
+        background=COLOR_YELLOW,
+        activebackground=COLOR_YELLOW,
     )
 
     cls.button_back.place(anchor="center", relx=.05, rely=.1)

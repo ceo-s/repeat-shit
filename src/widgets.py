@@ -10,7 +10,7 @@ import customtkinter as ctk
 
 from src.consts import *
 from src.gallery import Gallery
-from src.vocabulary import Word, Language, Vocabulary
+from src.vocabulary import Word, Language, Vocabulary, LANGUAGES_FULL
 from src.scrollable_dropdown import CTkScrollableDropdown
 from src.translator import Translator
 from src.misc import add_scroll_linux, debounce
@@ -46,7 +46,7 @@ class BasePopUp(ctk.CTkToplevel, ABC):
 
 
 class LanguagePicker(BaseWidget):
-  LANG_LIST = ["Russian", "English", "Italian", "French"]
+  LANG_LIST = LANGUAGES_FULL
 
   def init(self):
     self.event_add("<<LangSwap>>", "None")
@@ -503,7 +503,7 @@ class ReaderConfigurationWidget(BaseWidget):
     self.__lang_picker = ctk.CTkOptionMenu(self, 180, 50, 6,
                                            font=FONT(20, weight=FONT_WEIGHT_BOLD),
                                            dropdown_font=FONT(20),
-                                           values=["Russian", "English"],
+                                           values=LANGUAGES_FULL,
                                            fg_color=COLOR_PINK,
                                            text_color=COLOR_YELLOW,
                                            dropdown_text_color=COLOR_PINK,
@@ -515,7 +515,7 @@ class ReaderConfigurationWidget(BaseWidget):
 
     CTkScrollableDropdown(self.__lang_picker,
                           id_="to",
-                          values=["Russian", "English"],
+                          values=LANGUAGES_FULL,
                           command=lambda s: self.__on_lang_change(),
                           button_color=COLOR_PINK,
                           text_color=COLOR_YELLOW,

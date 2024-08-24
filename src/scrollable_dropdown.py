@@ -3,6 +3,8 @@ import sys
 import time
 import difflib
 
+from src.misc import add_scroll_linux
+
 
 class CTkScrollableDropdown(customtkinter.CTkToplevel):
 
@@ -64,11 +66,14 @@ class CTkScrollableDropdown(customtkinter.CTkToplevel):
       self.scroll_button_color = self.fg_color
       self.scroll_hover_color = self.fg_color
 
-    self.frame = customtkinter.CTkScrollableFrame(self, bg_color=self.transparent_color, fg_color=self.fg_color,
+    self.frame = customtkinter.CTkScrollableFrame(self, bg_color=self.transparent_color,
+                                                  fg_color=self.fg_color,
                                                   scrollbar_button_hover_color=self.scroll_hover_color,
-                                                  corner_radius=self.corner, border_width=frame_border_width,
+                                                  corner_radius=self.corner,
+                                                  border_width=frame_border_width,
                                                   scrollbar_button_color=self.scroll_button_color,
-                                                  border_color=self.frame_border_color)
+                                                  border_color=self.frame_border_color,
+                                                  )
     self.frame._scrollbar.grid_configure(padx=3)
     self.frame.pack(expand=True, fill="both")
     self.dummy_entry = customtkinter.CTkEntry(self.frame, fg_color="transparent", border_width=0, height=1, width=1)

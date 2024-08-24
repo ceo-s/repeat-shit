@@ -1,10 +1,10 @@
-
-# from tkinter import CTk
 from customtkinter import CTk
-
-import tkinter as tk
+from inspect import getsourcefile
 from tkinter import ttk
 
+import tkinter as tk
+import os
+import sys
 
 from src.consts import *
 from src.db import Database
@@ -12,7 +12,12 @@ from src.endpoints import init_endpoints, build_main_endpoint
 
 
 def main() -> None:
-  db = Database("db")
+  if getattr(sys, 'frozen', False):
+    base_path = os.path.dirname(sys.executable)
+  else:
+    base_path = os.path.abspath(os.path.dirname(__file__))
+
+  db = Database(os.path.join(base_path, "db"))
   root = CTk(fg_color=COLOR_YELLOW)
   root.geometry("{x}x{y}".format(
     x=root.winfo_screenwidth(),
