@@ -38,10 +38,10 @@ jobs:
     needs: build_linux
     steps:
       - name: download linux-build
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@v1
         with:
           name: linux-build
-          path: ./linux-build.tar.gz
+          path: ./
 
       - name: create release
         id: create_release
