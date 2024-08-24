@@ -2,7 +2,6 @@ from customtkinter import CTk
 from inspect import getsourcefile
 from tkinter import ttk
 
-import tkinter as tk
 import os
 import sys
 
