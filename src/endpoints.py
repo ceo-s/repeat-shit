@@ -13,7 +13,7 @@ import customtkinter as ctk
 from src.widgets import LanguagePicker, WordCountSlider, ExerciseWidget
 from src.widgets import TranslatorWidget, ReaderConfigurationWidget
 from src.widgets import ImportFromFilePopUP, AddNewWordPopUp
-from src.gallery import Gallery
+from src.gallery import Gallery, get_resource_path
 from src.db import Database
 from src.vocabulary import Word, Language
 from src.library import Book
@@ -863,15 +863,9 @@ class EndpointReader(BaseEndpoint):
 
     cls.button_back.place(anchor="center", relx=.05, rely=.1)
 
-    arrow_img = Image.open("assets/shared/arrow.png")
-    arrow_to_left_img = arrow_img.rotate(270.)
-    arrow_to_right_img = arrow_img.rotate(90.)
-    cls.arrow_to_left = ImageTk.PhotoImage(arrow_to_left_img)
-    cls.arrow_to_right = ImageTk.PhotoImage(arrow_to_right_img)
-
     cls.button_prev_page = Button(
         cls.canvas,
-        image=cls.arrow_to_left,
+        image=cls.SHARED_GALLERY["arrow_to_left.png"],
         borderwidth=0,
         highlightthickness=0,
         command=cls.__render_prev_page,
@@ -882,7 +876,7 @@ class EndpointReader(BaseEndpoint):
 
     cls.button_next_page = Button(
         cls.canvas,
-        image=cls.arrow_to_right,
+        image=cls.SHARED_GALLERY["arrow_to_right.png"],
         borderwidth=0,
         highlightthickness=0,
         command=cls.__render_next_page,

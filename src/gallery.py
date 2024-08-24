@@ -2,12 +2,29 @@ from os import PathLike
 from PIL import Image, ImageTk
 
 import os
+import sys
+
+
+def get_resource_path(relative_path: str | PathLike):
+  base_path = getattr(
+      sys,
+      '_MEIPASS',
+      None)
+
+  if base_path is None:
+    base_path = getattr(
+      sys,
+      '_MEIPASS2',
+      os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+  return os.path.join(base_path, relative_path)
 
 
 class Gallery:
   __instances = {}
 
   def __new__(cls, path: str | PathLike):
+    path = get_resource_path(path)
     if path not in cls.__instances:
       cls.__instances[path] = super().__new__(cls)
       cls.__instances[path].__init(path)
