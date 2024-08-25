@@ -66,12 +66,45 @@ jobs:
           name: windows-installer
           path: windows-installer.exe
 
+  build_macos:
+    name: Build for macos
+    runs-on: macos-latest
+
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: install packages
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: build universal2 executable with PyInstaller
+        run: |
+          pyinstaller --distpath dist/macos --add-data="assets:assets" -F --icon=logo.icns --target-arch universal2 main.py
+
+      - name: package as .dmg with icon
+        run: |
+          create-dmg --volname "RepeatShit" --icon "logo.icns" --window-size 500 300 macos-installer.dmg dist/macos/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: macos-installer
+          path: macos-installer.dmg
+
   release:
     name: Release project
     runs-on: ubuntu-latest
     needs:
       - build_linux
       - build_windows
+      - build_macos
 
     steps:
       - name: checkout repo content
@@ -89,7 +122,13 @@ jobs:
           name: windows-installer
           path: ./
 
+      - name: download macos-build
+        uses: actions/download-artifact@master
+        with:
+          name: macos-installer
+          path: ./
+
       - name: create release
-        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz windows-installer.exe --generate-notes
+        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz windows-installer.exe macos-installer.dmg --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
