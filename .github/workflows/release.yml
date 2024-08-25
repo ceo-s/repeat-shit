@@ -90,6 +90,6 @@ jobs:
           path: ./
 
       - name: create release
-        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz installer.exe --generate-notes
+        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz windows-installer.exe --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
