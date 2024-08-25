@@ -6,9 +6,10 @@ jobs:
   build_linux:
     name: Build for linux
     runs-on: ubuntu-latest
+
     steps:
       - name: checkout repo content
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: setup python
         uses: actions/setup-python@v4
@@ -32,13 +33,49 @@ jobs:
           name: linux-build
           path: linux-build.tar.gz
 
+  build_windows:
+    name: Build for windows
+    runs-on: windows-latest
+
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v4
+
+      - name: setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: install dependencies
+        run: pip install -r requirements.txt
+
+      - name: install NSIS
+        run: choco install nsis
+
+      - name: build executable with pyinstaller
+        run: |
+          pyinstaller --distpath dist/windows --add-data="assets;assets" -F --icon=logo.ico main.py
+
+      - name: create installer with NSIS
+        run: |
+          makensis installer_script.nsi
+
+      - name: upload build
+        uses: actions/upload-artifact@master
+        with:
+          name: windows-installer
+          path: dist/windows/installer.exe
+
   release:
     name: Release project
     runs-on: ubuntu-latest
-    needs: build_linux
+    needs:
+      - build_linux
+      - build_windows
+
     steps:
       - name: checkout repo content
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: download linux-build
         uses: actions/download-artifact@master
@@ -46,33 +83,13 @@ jobs:
           name: linux-build
           path: ./
 
+      - name: download windows-build
+        uses: actions/download-artifact@master
+        with:
+          name: windows-installer
+          path: ./
+
       - name: create release
-        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz --generate-notes
+        run: gh release create v.0.1.${{ github.run_number }} linux-build.tar.gz installer.exe --generate-notes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: create release
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: ${{ github.run_number }}
-      #     release_name: Release ${{ github.run_number }}
-      #     body: |
-      #       Changes in this Release
-      #       - First Change
-      #       - Second Change
-      #     draft: false
-      #     prerelease: false
-
-      # - name: upload release asset
-      #   id: upload_release_asset
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./linux-build.tar.gz
-      #     asset_name: linux-build.tar.gz
-      #     asset_content_type: application/tar+gzip
