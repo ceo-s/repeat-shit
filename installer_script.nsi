@@ -1,7 +1,7 @@
 !include "MUI2.nsh"
 
 Name "MyApp"
-OutFile "installer.exe"
+OutFile "windows-installer.exe"
 InstallDir $PROGRAMFILES\MyApp
 
 Page Directory
