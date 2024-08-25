@@ -64,7 +64,7 @@ jobs:
         uses: actions/upload-artifact@master
         with:
           name: windows-installer
-          path: dist/windows/installer.exe
+          path: installer.exe
 
   release:
     name: Release project
