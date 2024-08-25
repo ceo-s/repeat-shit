@@ -94,13 +94,13 @@ jobs:
 
       - name: package as .dmg with icon
         run: |
-          create-dmg --volname "RepeatShit" --icon "logo.icns" --window-size 500 300 dist/macos-installer.dmg dist/macos-arm64/
+          create-dmg --volname "RepeatShit" --icon "logo.icns" --window-size 500 300 "macos-installer.dmg" "dist/macos-arm64/"
 
       - name: upload build
         uses: actions/upload-artifact@master
         with:
           name: macos-installer
-          path: dist/macos-installer.dmg
+          path: macos-installer.dmg
 
   release:
     name: Release project
