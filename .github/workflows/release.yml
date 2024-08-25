@@ -84,6 +84,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: install create-dmg
+        run: |
+          brew install create-dmg
+
       - name: build arm64 executable
         run: |
           pyinstaller --distpath dist/macos-arm64 --add-data="assets:assets" -F --target-arch arm64 main.py
