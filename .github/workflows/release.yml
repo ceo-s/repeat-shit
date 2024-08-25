@@ -84,21 +84,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: build x86_64 executable
-        run: |
-          pyinstaller --distpath dist/macos-x86_64 --add-data="assets:assets" -F --target-arch x86_64 main.py
-
       - name: build arm64 executable
         run: |
           pyinstaller --distpath dist/macos-arm64 --add-data="assets:assets" -F --target-arch arm64 main.py
 
-      - name: merge executables
-        run: |
-          lipo -create -output dist/macos/RepeatShit dist/macos-x86_64/main dist/macos-arm64/main
-
       - name: package as .dmg with icon
         run: |
-          create-dmg --volname "RepeatShit" --icon "logo.icns" --window-size 500 300 macos-installer.dmg dist/macos/
+          create-dmg --volname "RepeatShit" --icon "logo.icns" --window-size 500 300 macos-installer.dmg dist/macos-arm64/
 
       - name: upload build
         uses: actions/upload-artifact@master
